@@ -1,36 +1,92 @@
-import express, { Application } from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { connectDB } from "./config/db";
+
+import connectDB from "./config/db";
+
+import authRoutes from "./routes/auth.route";
+import serviceRoutes from "./routes/service.route";
+import appointmentRoutes from "./routes/appointment";
+import availabilityRoutes from "./routes/availability.routes";
+import blockedSlotRoutes from "./routes/blockedSlot.route";
 import healthRoutes from "./routes/health";
+
+import errorMiddleware from "./middleware/error.middleware";
 
 dotenv.config();
 
-const app: Application = express();
+const app = express();
+
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
+connectDB();
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use("/api/health", healthRoutes);
-// Future routes go here, e.g.:
-// app.use("/api/auth", authRoutes);
-// app.use("/api/appointments", appointmentRoutes);
-// app.use("/api/services", serviceRoutes);
+/*
+  API routes
+*/
 
-// Fallback 404
-app.use((_req, res) => {
-  res.status(404).json({ message: "Route not found" });
+app.use("/api/health", healthRoutes);
+
+app.use("/api/auth", authRoutes);
+
+app.use("/api/services", serviceRoutes);
+
+app.use(
+  "/api/appointments",
+  appointmentRoutes
+);
+
+app.use(
+  "/api/availability",
+  availabilityRoutes
+);
+
+app.use(
+  "/api/blocked-slots",
+  blockedSlotRoutes
+);
+
+/*
+  Root route
+*/
+
+app.get("/", (_req, res) => {
+  res.json({
+    success: true,
+    message: "Lume Beauty Studio API is running smoothly!",
+  });
 });
 
-const start = async () => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-};
+/*
+  404 handler
+*/
 
-start();
+app.use((_req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
+/*
+  Global error handler
+*/
+
+app.use(errorMiddleware);
+
+app.listen(PORT, () => {
+  console.log(
+    `Lume Beauty Studio API running on http://localhost:${PORT}`
+  );
+});

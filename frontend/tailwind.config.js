@@ -1,22 +1,33 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+
   theme: {
     extend: {
       colors: {
         lume: {
-          black: "#0B0B0B",
-          charcoal: "#171412",
-          gold: "#C9A24B",
-          "gold-light": "#E4C77A",
-          cream: "#F5F1E8",
+          chocolate: "#2A1712",
+          espresso: "#3B2119",
+          charcoal: "#171514",
+          cream: "F7F3ED",
+          grey: "#77716D",
         },
       },
+
       fontFamily: {
         display: ["Playfair Display", "serif"],
-        sans: ["Inter", "sans-serif"],
+        sans: ["inter", "sans-serif"],
+      },
+
+      boxShadow:{
+        lume: "0 20px 60px rgba(0,0,0.25)",
       },
     },
   },
+
   plugins: [],
+
 };
