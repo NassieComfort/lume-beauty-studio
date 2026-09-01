@@ -1,11 +1,13 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export type UserRole = "customer" | "admin";
+
 export interface IUser extends Document {
   name: string;
   email: string;
   phone?: string;
   password: string;
-  role: "customer" | "admin";
+  role: UserRole;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -17,8 +19,6 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
       trim: true,
-      minlength: 2,
-      maxlength: 100,
     },
 
     email: {
@@ -31,6 +31,7 @@ const userSchema = new Schema<IUser>(
 
     phone: {
       type: String,
+      required: true,
       trim: true,
     },
 
@@ -38,7 +39,6 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
       minlength: 6,
-      select: false,
     },
 
     role: {
@@ -57,4 +57,6 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-export default mongoose.model<IUser>("User", userSchema);
+const User = mongoose.model<IUser>("User", userSchema);
+
+export default User;

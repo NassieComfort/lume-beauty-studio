@@ -26,8 +26,8 @@ export const getAvailableSlots = async (serviceId: string, date: string) => {
   const availability = await Availability.findOne({ dayOfWeek, isActive: true });
   if (!availability) return [];
 
-  const dayStart = toMinutes(availability.startTime);
-  const dayEnd = toMinutes(availability.endTime);
+  const dayStart = toMinutes((availability as any) .startTime);
+  const dayEnd = toMinutes((availability as any).endTime);
   const duration = service.duration;
 
   const blockedSlots = await BlockedSlot.find({ date });
@@ -42,14 +42,14 @@ export const getAvailableSlots = async (serviceId: string, date: string) => {
     const end = start + duration;
 
     const overlapsBlocked = blockedSlots.some((b) => {
-      const bStart = toMinutes(b.startTime);
-      const bEnd = toMinutes(b.endTime);
+      const bStart = toMinutes(b.startTime || "");
+      const bEnd = toMinutes(b.endTime || "");
       return start < bEnd && end > bStart;
     });
 
     const overlapsAppointment = existingAppointments.some((a) => {
-      const aStart = toMinutes(a.startTime);
-      const aEnd = toMinutes(a.endTime);
+      const aStart = toMinutes(a.startTime || "");
+      const aEnd = toMinutes(a.endTime || "");
       return start < aEnd && end > aStart;
     });
 

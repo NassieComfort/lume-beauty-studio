@@ -1,58 +1,80 @@
-import bcrypt from "bcryptjs";
-
-import User, { IUser } from "../models/User";
+import bcrypt from "bcrypt";
+import User from "../models/User";
 import AppError from "../utils/AppError";
 import generateToken from "../utils/generateToken";
 
-interface RegisterInput {
-    name: string; 
-    email: string;
-    password: string;
-}
+export const registerUser = async (
+  name: string,
+  email: string,
+  password: string
+) => {
+  const existingUser = await User.findOne({
+    email: email.toLowerCase(),
+  });
 
-interface LoginInput { 
-    email: string;
-    password: string;
-}
+  if (existingUser) {
+    throw new AppError("Email already registered", 400);
+  }
 
-export const registerUser = async (input: RegisterInput) => {
-    const existingUser = await User.findOne({ email: input.email });
-    if (existingUser) {
-        throw new AppError("Email already exists", 400);
-    }
+  const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await User.create(input);
-    const token = generateToken({
-        id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-    });
+  const user = await User.create({
+    name,
+    email: email.toLowerCase(),
+    password: hashedPassword,
+  });
 
-    return { token, user: sanitizerUser(user) };
-};
-
-export const loginUser = async (input: LoginInput) => {
-    const user = await User.findOne({ email: input.email });
-    if (!user) {
-        throw new AppError("Invalid email or password", 401);
-    }
-
-    const isMatch = await bcrypt.compare(input.password, user.password);
-    if (!isMatch) {
-        throw new AppError("Invalid email or password", 401);
-    }
-
-    const token = generateToken({
-        id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-    });
-    return { token, user: sanitizerUser(user) };
-};
-
-const sanitizerUser = (user: IUser) => ({
-    id: user._id,
-    name: user.name,
+  const token = generateToken({
+    id: user._id.toString(),
     email: user.email,
     role: user.role,
-});
+  });
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+    token,
+  };
+};
+
+export const loginUser = async (
+  email: string,
+  password: string
+) => {
+  const user = await User.findOne({
+    email: email.toLowerCase(),
+  });
+
+  if (!user) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  const passwordMatches = await bcrypt.compare(
+    password,
+    user.password
+  );
+
+  if (!passwordMatches) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  const token = generateToken({
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  });
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+    token,
+  };
+};

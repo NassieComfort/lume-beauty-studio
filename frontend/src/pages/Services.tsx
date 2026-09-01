@@ -1,4 +1,10 @@
+import { useEffect, useState } from "react";
 import ServiceCard from "../components/ServiceCard";
+import {
+  getServices,
+  type Service as ApiService,
+} from "../services/serviceApi";
+
 import acrylicNails from "../assets/public/Acrylic nails.jpeg";
 import browLamination from "../assets/public/Brow Lamination.jpeg";
 import browShaping from "../assets/public/WhatsApp Image 2026-08-25 at 01.07.18 (1).jpeg";
@@ -15,133 +21,47 @@ import toeNails from "../assets/public/Toe nail.jpeg";
 import underarm from "../assets/public/Underarm.jpeg";
 import volumeSet from "../assets/public/volume-set.jpg";
 
-const services = [
-  {
-    name: "Classic Full Set",
-    category: "Lashes",
-    description: "A timeless and natural lash enhancement.",
-    duration: "1 hr 30 mins",
-    price: "₦15,000",
-    image: classicSet,
-  },
-  {
-    name: "Hybrid Full Set",
-    category: "Lashes",
-    description: "A balanced combination of classic and volume.",
-    duration: "2 hrs",
-    price: "₦20,000",
-    image: hybridSet,
-  },
-  {
-    name: "Volume Full Set",
-    category: "Lashes",
-    description: "A fuller and more dramatic lash finish.",
-    duration: "2 hrs 30 mins",
-    price: "₦25,000",
-    image: volumeSet,
-  },
-  {
-    name: "Mega Volume + Wispy Set",
-    category: "Lashes",
-    description: "Full volume fans layeref withntexture spikes for a bold, fluttery finish",
-    duration: "2 hrs 30 mins",
-    price: "35,000",
-    image: megaVolumeSet,
-  },{
-    name: "Anime Lash Set",
-    category: "Lashes",
-    description: "Inspired by doll-eye trends, feauturing distinct exaggerated spikes paired with a clean, spaced-out lash line.",
-    duration: "30 mins",
-    price: "₦10,000",
-    image: animeSet,
-  },
-
-  {
-    name: "Lash Infills",
-    category: "Lashes",
-    description: "Refresh and maintain your existing lash set.",
-    duration: "1 hr",
-    price: "₦15,000",
-    image: refill,
-  },
-  {
-    name: "Gel Nails",
-    category: "Nails",
-    description: "A Long-lasting gel polish that provides high shine and chip-resistant wear for weeks.",
-    duration: "1 hr",
-    price: "₦10,000",
-    image: gelNails,
-  },
-  {
-    name: "Gel Toe Nails",
-    category: "Nails",
-    description: "Precise toe grooming and cuticle care finished with high-shine, long-lasting gel polish.",
-    duration: "45 mins",
-    price: "₦8,000",
-    image: toeNails,
-  },
-  {
-    name: "Acrylic & Powder Set",
-    category: "Nails",
-    description: "Durable lenght extension crafted with acrylic powder for maximum strenght and custom shapes.",
-    duration: "2 hrs",
-    price: "₦25,000",
-    image: acrylicNails,
-  },
-  {
-    name: "Brow Lamination",
-    category: "Brows",
-    description: "Softly lifted and defined brows.",
-    duration: "45 mins",
-    price: "₦20,000",
-    image: browLamination,
-  },
-  {
-    name: "Brow Shaping",
-    category: "Brows",
-    description: "Clean, balanced shaping tailored to your features.",
-    duration: "30 mins",
-    price: "₦10,000",
-    image: browShaping,
-  },
-  {
-    name: "Brow Wax",
-    category: "Waxing",
-    description: "Precise brow waxing for a clean finish.",
-    duration: "20 mins",
-    price: "₦5,000",
-    image: browWax,
-  },
-  {
-    name: "Underarm Wax",
-    category: "Waxing",
-    description: "Smooth and precise underarm waxing.",
-    duration: "20 mins",
-    price: "₦8,000",
-    image: underarm,
-  },
-  {
-    name: "Half-Leg Wax",
-    category: "Waxing",
-    description: "Smooth, clean and comfortable half-leg waxing.",
-    duration: "30 mins",
-    price: "₦15,000",
-    image: halfLeg,
-  },
-{
-    name: "Full-Leg Wax",
-    category: "Waxing",
-    description: "Smooth, clean and comfortable full-leg waxing.",
-    duration: "30 mins",
-    price: "₦30,000",
-    image: fullLeg,
-  },
-];
+const serviceImages: Record<string, string> = {
+  "Classic Full Set": classicSet,
+  "Hybrid Full Set": hybridSet,
+  "Volume Full Set": volumeSet,
+  "Mega Volume + Wispy Set": megaVolumeSet,
+  "Anime Lash Set": animeSet,
+  "Lash Infills": refill,
+  "Gel Nails": gelNails,
+  "Gel Toe Nails": toeNails,
+  "Acrylic & Powder Set": acrylicNails,
+  "Brow Lamination": browLamination,
+  "Brow Shaping": browShaping,
+  "Brow Wax": browWax,
+  "Underarm Wax": underarm,
+  "Half-Leg Wax": halfLeg,
+  "Full-Leg Wax": fullLeg,
+};
 
 export default function Services() {
+  const [services, setServices] = useState<ApiService[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const data = await getServices();
+        setServices(data);
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load services.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadServices();
+  }, []);
+
   return (
     <section className="min-h-screen bg-lume-cream px-6 pb-24 pt-40 text-lume-charcoal lg:px-10">
-
       <div className="mx-auto max-w-7xl">
 
         <p className="text-xs uppercase tracking-[0.3em] text-lume-grey">
@@ -157,19 +77,47 @@ export default function Services() {
           discover the services available at Lume Beauty Studio.
         </p>
 
-        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {loading && (
+          <p className="mt-14 text-sm text-lume-grey">
+            Loading services...
+          </p>
+        )}
 
-          {services.map((service) => (
-            <ServiceCard
-              key={service.name}
-              {...service}
-            />
-          ))}
+        {error && (
+          <p className="mt-14 text-sm text-red-500">
+            {error}
+          </p>
+        )}
 
-        </div>
+        {!loading && !error && (
+          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+
+            {services.map((service) => (
+              <ServiceCard
+                key={service._id}
+                name={service.name}
+                category={service.category}
+                description={service.description}
+                duration={
+                  service.duration >= 60
+                    ? `${Math.floor(service.duration / 60)} hr${
+                        service.duration >= 120 ? "s" : ""
+                      }${
+                        service.duration % 60
+                          ? ` ${service.duration % 60} mins`
+                          : ""
+                      }`
+                    : `${service.duration} mins`
+                }
+                price={`₦${service.price.toLocaleString()}`}
+                image={serviceImages[service.name]}
+              />
+            ))}
+
+          </div>
+        )}
 
       </div>
-
     </section>
   );
 }

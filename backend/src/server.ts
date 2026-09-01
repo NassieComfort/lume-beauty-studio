@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 import connectDB from "./config/db";
 
@@ -32,30 +33,22 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/images", express.static(path.join(process.cwd(), "images")));
+
 /*
   API routes
 */
-
 app.use("/api/health", healthRoutes);
 
 app.use("/api/auth", authRoutes);
 
 app.use("/api/services", serviceRoutes);
 
-app.use(
-  "/api/appointments",
-  appointmentRoutes
-);
+app.use("/api/appointments", appointmentRoutes);
 
-app.use(
-  "/api/availability",
-  availabilityRoutes
-);
+app.use("/api/availability", availabilityRoutes);
 
-app.use(
-  "/api/blocked-slots",
-  blockedSlotRoutes
-);
+app.use("/api/blocked-slots", blockedSlotRoutes);
 
 /*
   Root route

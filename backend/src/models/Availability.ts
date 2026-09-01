@@ -2,9 +2,9 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IAvailability extends Document {
   dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  isActive: boolean;
+  isOpen: boolean;
+  openingTime?: string;
+  closingTime?: string;
 }
 
 const availabilitySchema = new Schema<IAvailability>(
@@ -14,31 +14,27 @@ const availabilitySchema = new Schema<IAvailability>(
       required: true,
       min: 0,
       max: 6,
+      unique: true,
     },
 
-    startTime: {
-      type: String,
-      required: true,
-    },
-
-    endTime: {
-      type: String,
-      required: true,
-    },
-
-    isActive: {
+    isOpen: {
       type: Boolean,
       default: true,
+    },
+
+    openingTime: {
+      type: String,
+      required: true,
+    },
+
+    closingTime: {
+      type: String,
+      required: true,
     },
   },
   {
     timestamps: true,
   }
-);
-
-availabilitySchema.index(
-  { dayOfWeek: 1 },
-  { unique: true }
 );
 
 export default mongoose.model<IAvailability>(

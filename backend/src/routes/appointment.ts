@@ -1,66 +1,28 @@
 import { Router } from "express";
 
 import {
-  getAppointments,
-  getAppointment,
-  getAvailableSlots,
   createAppointment,
+  getAllAppointments,
+  getAppointmentById,
   updateAppointmentStatus,
-  updatePaymentStatus,
   cancelAppointment,
-} from "../controllers/appointment.controller";
-
-import protect from "../middleware/auth.middleware";
-import adminOnly from "../middleware/role.middleware";
+} from "../controllers/booking.controller";
 
 const router = Router();
 
-/*
-  Public booking routes
-*/
-
-router.get("/available-slots", getAvailableSlots);
-
+// Create appointment
 router.post("/", createAppointment);
 
-/*
-  Authenticated routes
-*/
+// Get all appointments
+router.get("/", getAllAppointments);
 
-router.get(
-  "/",
-  protect,
-  getAppointments
-);
+// Get appointment by ID
+router.get("/:id", getAppointmentById);
 
-router.get(
-  "/:id",
-  protect,
-  getAppointment
-);
+// Update appointment status
+router.patch("/:id", updateAppointmentStatus);
 
-router.patch(
-  "/:id/cancel",
-  protect,
-  cancelAppointment
-);
-
-/*
-  Admin routes
-*/
-
-router.patch(
-  "/:id/status",
-  protect,
-  adminOnly,
-  updateAppointmentStatus
-);
-
-router.patch(
-  "/:id/payment",
-  protect,
-  adminOnly,
-  updatePaymentStatus
-);
+// Cancel appointment
+router.patch("/:id/cancel", cancelAppointment);
 
 export default router;

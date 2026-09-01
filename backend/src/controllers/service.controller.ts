@@ -1,40 +1,98 @@
-import { RequestHandler } from "express";
+import { Request, Response, NextFunction } from "express";
+import {
+  getAllServices,
+  getServiceById,
+  createService,
+  updateService,
+  deleteService,
+} from "../services/service.service";
 
-import Service from "../models/Service";
-import AppError from "../utils/AppError";
-import asyncHandler from "../utils/asyncHandler";
+export const getServices = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const services = await getAllServices();
 
-export const getServices: RequestHandler = asyncHandler(async (_req, res) => {
-  const services = await Service.find({ isActive: true }).sort({ name: 1 });
-  res.json({ success: true, services });
-});
-
-export const getService: RequestHandler = asyncHandler(async (req, res) => {
-  const service = await Service.findById(req.params.id);
-  if (!service || !service.isActive) throw new AppError("Service not found", 404);
-  res.json({ success: true, service });
-});
-
-export const createService: RequestHandler = asyncHandler(async (req, res) => {
-  const { name, description, duration, price, depositAmount } = req.body;
-  if (!name || !description || duration === undefined || price === undefined) {
-    throw new AppError("Name, description, duration and price are required", 400);
+    res.status(200).json({
+      success: true,
+      data: services,
+    });
+  } catch (error) {
+    next(error);
   }
-  const service = await Service.create({ name, description, duration, price, depositAmount });
-  res.status(201).json({ success: true, service });
-});
+};
 
-export const updateService: RequestHandler = asyncHandler(async (req, res) => {
-  const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-  if (!service) throw new AppError("Service not found", 404);
-  res.json({ success: true, service });
-});
+export const getSingleService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const service = await getServiceById(req.params.id);
 
-export const deleteService: RequestHandler = asyncHandler(async (req, res) => {
-  const service = await Service.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
-  if (!service) throw new AppError("Service not found", 404);
-  res.json({ success: true, message: "Service removed successfully" });
-});
+    res.status(200).json({
+      success: true,
+      data: service,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createNewService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const service = await createService(req.body);
+
+    res.status(201).json({
+      success: true,
+      message: "Service created successfully",
+      data: service,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const editService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const service = await updateService(
+      req.params.id,
+      req.body
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Service updated successfully",
+      data: service,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    await deleteService(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Service removed successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

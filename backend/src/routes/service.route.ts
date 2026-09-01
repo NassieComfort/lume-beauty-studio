@@ -1,40 +1,39 @@
 import { Router } from "express";
-
 import {
   getServices,
-  getService,
-  createService,
-  updateService,
-  deleteService,
+  getSingleService,
+  createNewService,
+  editService,
+  removeService,
 } from "../controllers/service.controller";
 
-import protect from "../middleware/auth.middleware";
-import adminOnly from "../middleware/role.middleware";
+import protect from "../middleware/protect";
+import adminOnly from "../middleware/adminOnly";
 
 const router = Router();
 
 router.get("/", getServices);
-router.get("/:id", getService);
+router.get("/:id", getSingleService);
 
 router.post(
   "/",
   protect,
   adminOnly,
-  createService
+  createNewService
 );
 
 router.patch(
   "/:id",
   protect,
   adminOnly,
-  updateService
+  editService
 );
 
 router.delete(
   "/:id",
   protect,
   adminOnly,
-  deleteService
+  removeService
 );
 
 export default router;

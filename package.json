@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "react-router-dom": "^7.18.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0"
   }
 }

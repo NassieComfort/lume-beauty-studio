@@ -1,16 +1,16 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IBlockedSlot extends Document {
-  date: Date;
-  startTime: string;
-  endTime: string;
-  isActive: boolean;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  reason?: string;
 }
 
 const blockedSlotSchema = new Schema<IBlockedSlot>(
   {
     date: {
-      type: Date,
+      type: String,
       required: true,
     },
 
@@ -24,9 +24,9 @@ const blockedSlotSchema = new Schema<IBlockedSlot>(
       required: true,
     },
 
-    isActive: {
-      type: Boolean,
-      default: true,
+    reason: {
+      type: String,
+      trim: true,
     },
   },
   {

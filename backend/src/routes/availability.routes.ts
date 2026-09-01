@@ -2,9 +2,7 @@ import { Router } from "express";
 
 import {
   getAvailability,
-  createAvailability,
-  updateAvailability,
-  deleteAvailability,
+  createOrUpdateAvailability,
 } from "../controllers/availability.controller";
 
 import protect from "../middleware/auth.middleware";
@@ -14,25 +12,11 @@ const router = Router();
 
 router.get("/", getAvailability);
 
-router.post(
+router.put(
   "/",
   protect,
   adminOnly,
-  createAvailability
-);
-
-router.patch(
-  "/:id",
-  protect,
-  adminOnly,
-  updateAvailability
-);
-
-router.delete(
-  "/:id",
-  protect,
-  adminOnly,
-  deleteAvailability
+  createOrUpdateAvailability
 );
 
 export default router;

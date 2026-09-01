@@ -1,22 +1,22 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IAppointment extends Document {
-  user?: mongoose.Types.ObjectId;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
 
+  user?: mongoose.Types.ObjectId;
+
   service: mongoose.Types.ObjectId;
 
-  date: Date;
+  appointmentDate: Date;
   startTime: string;
   endTime: string;
 
-  servicePrice: number;
+  price: number;
   depositAmount: number;
-  remainingAmount: number;
 
-  paymentStatus: "pending" | "partial" | "paid" | "failed";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
 
   status:
     | "pending"
@@ -34,12 +34,6 @@ export interface IAppointment extends Document {
 
 const appointmentSchema = new Schema<IAppointment>(
   {
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: false,
-    },
-
     customerName: {
       type: String,
       required: true,
@@ -59,13 +53,19 @@ const appointmentSchema = new Schema<IAppointment>(
       trim: true,
     },
 
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
+
     service: {
       type: Schema.Types.ObjectId,
       ref: "Service",
       required: true,
     },
 
-    date: {
+    appointmentDate: {
       type: Date,
       required: true,
     },
@@ -80,7 +80,7 @@ const appointmentSchema = new Schema<IAppointment>(
       required: true,
     },
 
-    servicePrice: {
+    price: {
       type: Number,
       required: true,
     },
@@ -88,18 +88,11 @@ const appointmentSchema = new Schema<IAppointment>(
     depositAmount: {
       type: Number,
       required: true,
-      default: 0,
-    },
-
-    remainingAmount: {
-      type: Number,
-      required: true,
-      default: 0,
     },
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "partial", "paid", "failed"],
+      enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
 
@@ -125,11 +118,6 @@ const appointmentSchema = new Schema<IAppointment>(
     timestamps: true,
   }
 );
-
-appointmentSchema.index({
-  date: 1,
-  startTime: 1,
-});
 
 export default mongoose.model<IAppointment>(
   "Appointment",

@@ -17,10 +17,6 @@ const protect: RequestHandler = (req, _res, next) => {
 
   const token = authorization.split(" ")[1];
 
-  if (!token) {
-    return next(new AppError("Authentication required", 401));
-  }
-
   try {
     const decoded = jwt.verify(
       token,

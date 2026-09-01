@@ -9,7 +9,6 @@ const DEPOSIT_PERCENTAGE = 30;
 
 const timeToMinutes = (time: string) => {
   const [hours, minutes] = time.split(":").map(Number);
-
   return hours * 60 + minutes;
 };
 
@@ -31,40 +30,25 @@ export const createAppointment = async (
   next: NextFunction
 ) => {
   try {
-    console.log("Request body:", req.body);
-
     const {
       serviceId,
       date,
       startTime,
-      guestName,
-      guestEmail,
-      guestPhone,
+      name,
+      email,
+      phone,
       notes,
     } = req.body;
 
-    console.log({
-      serviceId,
-      date,
-      startTime,
-      guestName,
-      guestEmail,
-      guestPhone,
-    });
-
-    // -------------------------
-    // VALIDATE REQUIRED FIELDS
-    // -------------------------
-
+    // Validate booking details
     if (
       !serviceId ||
       !date ||
       !startTime ||
-      !guestName ||
-      !guestEmail ||
-      !guestPhone
+      !name ||
+      !email ||
+      !phone
     ) {
-      console.log("Validation failed. Missing fields.");
       return next(
         new AppError(
           "Please provide all required booking details.",
@@ -73,25 +57,17 @@ export const createAppointment = async (
       );
     }
 
-    // -------------------------
-    // FIND SERVICE
-    // -------------------------
-
+    // Find active service
     const service = await Service.findOne({
       _id: serviceId,
       isActive: true,
     });
 
     if (!service) {
-      return next(
-        new AppError("Service not found.", 404)
-      );
+      return next(new AppError("Service not found", 404));
     }
 
-    // -------------------------
-    // CALCULATE TIME
-    // -------------------------
-
+    // Calculate appointment end time
     const requestedStart = timeToMinutes(startTime);
 
     const requestedEnd =
@@ -99,26 +75,19 @@ export const createAppointment = async (
 
     const endTime = minutesToTime(requestedEnd);
 
-    // -------------------------
-    // VALIDATE DATE
-    // -------------------------
-
-    const appointmentDate = new Date(
-      `${date}T00:00:00`
-    );
+    // Create appointment date
+    const appointmentDate = new Date(`${date}T00:00:00`);
 
     if (Number.isNaN(appointmentDate.getTime())) {
       return next(
-        new AppError("Invalid appointment date.", 400)
+        new AppError("Invalid appointment date", 400)
       );
     }
 
-    // -------------------------
-    // CHECK AVAILABILITY
-    // -------------------------
-
+    // Get day of week
     const dayOfWeek = appointmentDate.getDay();
 
+    // Check studio availability
     const availability = await Availability.findOne({
       dayOfWeek,
     });
@@ -132,7 +101,7 @@ export const createAppointment = async (
       );
     }
 
-    // Before opening time
+    // Check opening time
     if (
       availability.openingTime &&
       requestedStart <
@@ -146,7 +115,7 @@ export const createAppointment = async (
       );
     }
 
-    // After closing time
+    // Check closing time
     if (
       availability.closingTime &&
       requestedEnd >
@@ -160,16 +129,13 @@ export const createAppointment = async (
       );
     }
 
-    // -------------------------
-    // CHECK BLOCKED SLOTS
-    // -------------------------
-
+    // Check blocked slots
     const blockedSlots = await BlockedSlot.find({
       date,
     });
 
     for (const blocked of blockedSlots) {
-      // Full-day block
+      // Full-day blocked slot
       if (!blocked.startTime || !blocked.endTime) {
         return next(
           new AppError(
@@ -201,10 +167,7 @@ export const createAppointment = async (
       }
     }
 
-    // -------------------------
-    // CHECK EXISTING BOOKINGS
-    // -------------------------
-
+    // Check existing appointments
     const existingAppointments =
       await Appointment.find({
         appointmentDate,
@@ -236,61 +199,40 @@ export const createAppointment = async (
       }
     }
 
-    // -------------------------
-    // CALCULATE PAYMENT
-    // -------------------------
-
-    const price = service.price;
-
+    // Calculate deposit
     const depositAmount =
-      price * (DEPOSIT_PERCENTAGE / 100);
+      service.price * (DEPOSIT_PERCENTAGE / 100);
 
-    // -------------------------
-    // CREATE APPOINTMENT
-    // -------------------------
-
+    // Create appointment
     const appointment = await Appointment.create({
-      customerName: guestName.trim(),
-      customerEmail: guestEmail.trim().toLowerCase(),
-      customerPhone: guestPhone.trim(),
-
-      // No account required
-      // user remains undefined for guest bookings
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
 
       service: service._id,
 
       appointmentDate,
-
       startTime,
       endTime,
 
-      price,
+      price: service.price,
       depositAmount,
 
       paymentStatus: "pending",
-
       status: "pending",
 
-      notes: notes?.trim(),
+      notes,
     });
-
-    // -------------------------
-    // RESPONSE
-    // -------------------------
 
     return res.status(201).json({
       success: true,
-      message: "Appointment request submitted successfully.",
+      message: "Appointment created successfully.",
       data: appointment,
     });
   } catch (error) {
     next(error);
   }
 };
-
-// =========================
-// GET ALL APPOINTMENTS
-// =========================
 
 export const getAllAppointments = async (
   _req: Request,
@@ -299,10 +241,7 @@ export const getAllAppointments = async (
 ) => {
   try {
     const appointments = await Appointment.find()
-      .populate(
-        "service",
-        "name price duration category"
-      )
+      .populate("service", "name price duration")
       .sort({
         appointmentDate: 1,
         startTime: 1,
@@ -318,10 +257,6 @@ export const getAllAppointments = async (
   }
 };
 
-// =========================
-// GET APPOINTMENT BY ID
-// =========================
-
 export const getAppointmentById = async (
   req: Request,
   res: Response,
@@ -332,13 +267,13 @@ export const getAppointmentById = async (
       await Appointment.findById(req.params.id)
         .populate(
           "service",
-          "name price duration category"
+          "name price duration"
         );
 
     if (!appointment) {
       return next(
         new AppError(
-          "Appointment not found.",
+          "Appointment not found",
           404
         )
       );
@@ -352,10 +287,6 @@ export const getAppointmentById = async (
     next(error);
   }
 };
-
-// =========================
-// UPDATE APPOINTMENT STATUS
-// =========================
 
 export const updateAppointmentStatus = async (
   req: Request,
@@ -377,7 +308,7 @@ export const updateAppointmentStatus = async (
     if (!allowedStatuses.includes(status)) {
       return next(
         new AppError(
-          "Invalid appointment status.",
+          "Invalid appointment status",
           400
         )
       );
@@ -386,9 +317,7 @@ export const updateAppointmentStatus = async (
     const appointment =
       await Appointment.findByIdAndUpdate(
         req.params.id,
-        {
-          status,
-        },
+        { status },
         {
           new: true,
           runValidators: true,
@@ -398,7 +327,7 @@ export const updateAppointmentStatus = async (
     if (!appointment) {
       return next(
         new AppError(
-          "Appointment not found.",
+          "Appointment not found",
           404
         )
       );
@@ -415,10 +344,6 @@ export const updateAppointmentStatus = async (
   }
 };
 
-// =========================
-// CANCEL APPOINTMENT
-// =========================
-
 export const cancelAppointment = async (
   req: Request,
   res: Response,
@@ -431,7 +356,7 @@ export const cancelAppointment = async (
     if (!appointment) {
       return next(
         new AppError(
-          "Appointment not found.",
+          "Appointment not found",
           404
         )
       );
@@ -441,15 +366,6 @@ export const cancelAppointment = async (
       return next(
         new AppError(
           "Completed appointments cannot be cancelled.",
-          400
-        )
-      );
-    }
-
-    if (appointment.status === "cancelled") {
-      return next(
-        new AppError(
-          "Appointment is already cancelled.",
           400
         )
       );

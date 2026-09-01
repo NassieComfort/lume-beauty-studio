@@ -11,12 +11,7 @@ import adminOnly from "../middleware/role.middleware";
 
 const router = Router();
 
-router.get(
-  "/",
-  protect,
-  adminOnly,
-  getBlockedSlots
-);
+router.get("/", getBlockedSlots);
 
 router.post(
   "/",

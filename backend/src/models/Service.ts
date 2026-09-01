@@ -2,10 +2,11 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IService extends Document {
   name: string;
+  category: "Lashes" | "Nails" | "Brows" | "Waxing";
   description: string;
-  duration: number;
   price: number;
-  depositAmount: number;
+  duration: number;
+  image: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -19,16 +20,16 @@ const serviceSchema = new Schema<IService>(
       trim: true,
     },
 
+    category: {
+      type: String,
+      enum: ["Lashes", "Nails", "Brows", "Waxing"],
+      required: true,
+    },
+
     description: {
       type: String,
       required: true,
       trim: true,
-    },
-
-    duration: {
-      type: Number,
-      required: true,
-      min: 1,
     },
 
     price: {
@@ -37,10 +38,15 @@ const serviceSchema = new Schema<IService>(
       min: 0,
     },
 
-    depositAmount: {
+    duration: {
       type: Number,
-      default: 0,
-      min: 0,
+      required: true,
+      min: 15,
+    },
+
+    image: {
+      type: String,
+      required: true,
     },
 
     isActive: {
@@ -53,4 +59,6 @@ const serviceSchema = new Schema<IService>(
   }
 );
 
-export default mongoose.model<IService>("Service", serviceSchema);
+const Service = mongoose.model<IService>("Service", serviceSchema);
+
+export default Service;

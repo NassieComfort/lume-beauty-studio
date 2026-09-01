@@ -1,104 +1,79 @@
-import { RequestHandler } from "express";
-
+import { Request, Response, NextFunction } from "express";
 import Availability from "../models/Availability";
 import AppError from "../utils/AppError";
-import asyncHandler from "../utils/asyncHandler";
 
-export const getAvailability: RequestHandler = asyncHandler(
-  async (_req, res) => {
-    const availability = await Availability.find({
-      isActive: true,
-    }).sort({ dayOfWeek: 1 });
-
-    res.json({
-      success: true,
-      availability,
+export const getAvailability = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const availability = await Availability.find().sort({
+      dayOfWeek: 1,
     });
-  }
-);
 
-export const createAvailability: RequestHandler = asyncHandler(
-  async (req, res) => {
+    return res.json({
+      success: true,
+      data: availability,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createOrUpdateAvailability = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
     const {
       dayOfWeek,
-      startTime,
-      endTime,
+      isOpen,
+      openingTime,
+      closingTime,
     } = req.body;
 
     if (
       dayOfWeek === undefined ||
-      !startTime ||
-      !endTime
+      isOpen === undefined
     ) {
-      throw new AppError(
-        "dayOfWeek, startTime and endTime are required",
-        400
+      return next(
+        new AppError(
+          "dayOfWeek and isOpen are required",
+          400
+        )
       );
     }
 
-    const existing = await Availability.findOne({
-      dayOfWeek,
-    });
-
-    if (existing) {
-      throw new AppError(
-        "Availability already exists for this day",
-        409
+    if (dayOfWeek < 0 || dayOfWeek > 6) {
+      return next(
+        new AppError("Invalid day of week", 400)
       );
     }
 
-    const availability = await Availability.create({
-      dayOfWeek,
-      startTime,
-      endTime,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Availability created successfully",
-      availability,
-    });
-  }
-);
-
-export const updateAvailability: RequestHandler =
-  asyncHandler(async (req, res) => {
     const availability =
-      await Availability.findByIdAndUpdate(
-        req.params.id,
-        req.body,
+      await Availability.findOneAndUpdate(
+        { dayOfWeek },
+        {
+          dayOfWeek,
+          isOpen,
+          openingTime,
+          closingTime,
+        },
         {
           new: true,
+          upsert: true,
           runValidators: true,
         }
       );
 
-    if (!availability) {
-      throw new AppError("Availability not found", 404);
-    }
-
-    res.json({
+    return res.json({
       success: true,
       message: "Availability updated successfully",
-      availability,
+      data: availability,
     });
-  });
-
-export const deleteAvailability: RequestHandler =
-  asyncHandler(async (req, res) => {
-    const availability =
-      await Availability.findByIdAndUpdate(
-        req.params.id,
-        { isActive: false },
-        { new: true }
-      );
-
-    if (!availability) {
-      throw new AppError("Availability not found", 404);
-    }
-
-    res.json({
-      success: true,
-      message: "Availability removed successfully",
-    });
-  });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,14 +1,30 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+
+import {
+  getBlockedSlots,
+  createBlockedSlot,
+  deleteBlockedSlot,
+} from "../controllers/blockedSlot.controller";
+
+import protect from "../middleware/auth.middleware";
+import adminOnly from "../middleware/role.middleware";
 
 const router = Router();
 
-// GET /api/health — simple check that the API and server are alive
-router.get("/", (_req: Request, res: Response) => {
-  res.status(200).json({
-    status: "ok",
-    message: "Lume Beauty Studio API is running",
-    timestamp: new Date().toISOString(),
-  });
-});
+router.get("/", getBlockedSlots);
+
+router.post(
+  "/",
+  protect,
+  adminOnly,
+  createBlockedSlot
+);
+
+router.delete(
+  "/:id",
+  protect,
+  adminOnly,
+  deleteBlockedSlot
+);
 
 export default router;
