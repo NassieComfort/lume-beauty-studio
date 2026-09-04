@@ -34,17 +34,16 @@ export default function Booking() {
     phone: "",
   });
 
-  /*
-   * Today's date
-   */
   const today = new Date();
+
   const todayString = `${today.getFullYear()}-${String(
     today.getMonth() + 1
   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  /*
-   * Load services from backend
-   */
+  // =========================
+  // LOAD SERVICES
+  // =========================
+
   useEffect(() => {
     const loadServices = async () => {
       try {
@@ -65,20 +64,20 @@ export default function Booking() {
     loadServices();
   }, []);
 
-  /*
-   * Find selected service
-   */
-  const selectedService = useMemo(
-    () =>
-      services.find(
-        (service) => service._id === formData.serviceId
-      ),
-    [services, formData.serviceId]
-  );
+  // =========================
+  // SELECTED SERVICE
+  // =========================
 
-  /*
-   * Deposit calculation
-   */
+  const selectedService = useMemo(() => {
+    return services.find(
+      (service) => service._id === formData.serviceId
+    );
+  }, [services, formData.serviceId]);
+
+  // =========================
+  // PAYMENT
+  // =========================
+
   const depositAmount = selectedService
     ? selectedService.price * (DEPOSIT_PERCENTAGE / 100)
     : 0;
@@ -87,9 +86,10 @@ export default function Booking() {
     ? selectedService.price - depositAmount
     : 0;
 
-  /*
-   * Handle input changes
-   */
+  // =========================
+  // HANDLE INPUT
+  // =========================
+
   const handleChange = (
     event: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement
@@ -102,158 +102,165 @@ export default function Booking() {
       [name]: value,
     }));
 
-    // Remove previous error while user is correcting the form
-    if (submitError) {
-      setSubmitError("");
-    }
+    setSubmitError("");
   };
 
-  /*
-   * Handle time selection
-   */
+  // =========================
+  // HANDLE TIME
+  // =========================
+
   const handleTimeSelect = (time: string) => {
     setFormData((previous) => ({
       ...previous,
       time,
     }));
 
-    if (submitError) {
-      setSubmitError("");
+    setSubmitError("");
+  };
+
+  // =========================
+  // SUBMIT BOOKING
+  // =========================
+
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    const serviceId = formData.serviceId.trim();
+    const date = formData.date.trim();
+    const startTime = formData.time.trim();
+    const guestName = formData.name.trim();
+    const guestEmail = formData.email.trim();
+    const guestPhone = formData.phone.trim();
+
+    console.log("BOOKING DATA BEING SENT:", {
+      serviceId,
+      date,
+      startTime,
+      guestName,
+      guestEmail,
+      guestPhone,
+    });
+
+    // Required fields
+
+    if (!serviceId) {
+      setSubmitError("Please select a service.");
+      return;
+    }
+
+    if (!date) {
+      setSubmitError("Please select a date.");
+      return;
+    }
+
+    if (!startTime) {
+      setSubmitError("Please select a preferred time slot.");
+      return;
+    }
+
+    if (!guestName) {
+      setSubmitError("Please enter your full name.");
+      return;
+    }
+
+    if (!guestEmail) {
+      setSubmitError("Please enter your email address.");
+      return;
+    }
+
+    if (!guestPhone) {
+      setSubmitError("Please enter your phone number.");
+      return;
+    }
+
+    // Validate date
+
+    const selectedDate = new Date(`${date}T00:00:00`);
+
+    if (Number.isNaN(selectedDate.getTime())) {
+      setSubmitError("Please select a valid date.");
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      setSubmitError(
+        "Please select a future date for your appointment."
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/appointments",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            serviceId,
+            date,
+            startTime,
+            guestName,
+            guestEmail,
+            guestPhone,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      console.log("BOOKING RESPONSE:", data);
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to process booking request."
+        );
+      }
+
+      setSubmitSuccess(true);
+
+      setFormData({
+        serviceId: "",
+        date: "",
+        time: "",
+        name: "",
+        email: "",
+        phone: "",
+      });
+    } catch (error) {
+      console.error("Booking error:", error);
+
+      if (error instanceof Error) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError(
+          "Something went wrong. Please try again."
+        );
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  /*
-   * Submit booking
-   */
-  const handleSubmit = async (
-  event: React.FormEvent<HTMLFormElement>
-) => {
-  event.preventDefault();
-
-  setSubmitError("");
-  setSubmitSuccess(false);
-
-  // Get the values directly from our React state
-  const serviceId = formData.serviceId.trim();
-  const date = formData.date.trim();
-  const startTime = formData.time.trim();
-  const name = formData.name.trim();
-  const email = formData.email.trim();
-  const phone = formData.phone.trim();
-
-  // Validate required fields
-  if (!serviceId) {
-    setSubmitError("Please select a service.");
-    return;
-  }
-
-  if (!date) {
-    setSubmitError("Please select a date.");
-    return;
-  }
-
-  if (!startTime) {
-    setSubmitError("Please select a preferred time slot.");
-    return;
-  }
-
-  if (!name) {
-    setSubmitError("Please enter your full name.");
-    return;
-  }
-
-  if (!email) {
-    setSubmitError("Please enter your email address.");
-    return;
-  }
-
-  if (!phone) {
-    setSubmitError("Please enter your phone number.");
-    return;
-  }
-
-  // Validate email
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    setSubmitError("Please enter a valid email address.");
-    return;
-  }
-
-  // Validate date
-  const selectedDate = new Date(`${date}T00:00:00`);
-
-  if (Number.isNaN(selectedDate.getTime())) {
-    setSubmitError("Please select a valid appointment date.");
-    return;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (selectedDate < today) {
-    setSubmitError(
-      "Please select a future date for your appointment."
-    );
-    return;
-  }
-
-  setSubmitting(true);
-
-  try {
-    const response = await fetch(
-      "http://localhost:5000/api/appointments",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          serviceId,
-          date,
-          startTime,
-          guestName: name,
-          guestEmail: email,
-          guestPhone: phone,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-          "Failed to process booking request."
-      );
-    }
-
-    setSubmitSuccess(true);
-
-    setFormData({
-      serviceId: "",
-      date: "",
-      time: "",
-      name: "",
-      email: "",
-      phone: "",
-    });
-  } catch (error) {
-    console.error("Booking error:", error);
-
-    setSubmitError(
-      error instanceof Error
-        ? error.message
-        : "Something went wrong. Please try again."
-    );
-  } finally {
-    setSubmitting(false);
-  }
-};
+  // =========================
+  // PAGE
+  // =========================
 
   return (
     <section className="min-h-screen bg-lume-charcoal px-6 pb-24 pt-40 lg:px-10">
       <div className="mx-auto max-w-6xl">
 
         {/* HEADER */}
+
         <div className="max-w-3xl">
           <p className="text-xs uppercase tracking-[0.3em] text-lume-grey">
             Appointments
@@ -265,11 +272,13 @@ export default function Booking() {
 
           <p className="mt-6 max-w-2xl text-sm leading-7 text-lume-cream/60 md:text-base">
             Choose your service, preferred date and available
-            time. No account is required to request an appointment.
+            time. No account is required to request an
+            appointment.
           </p>
         </div>
 
         {/* SUCCESS */}
+
         {submitSuccess ? (
           <div className="mt-14 border border-emerald-500/30 bg-emerald-950/20 p-8 text-center text-emerald-200">
             <h2 className="font-display text-3xl">
@@ -283,7 +292,10 @@ export default function Booking() {
 
             <button
               type="button"
-              onClick={() => setSubmitSuccess(false)}
+              onClick={() => {
+                setSubmitSuccess(false);
+                setSubmitError("");
+              }}
               className="mt-6 rounded-full bg-lume-cream px-6 py-3 text-xs font-semibold uppercase tracking-wider text-lume-charcoal hover:bg-white"
             >
               Book Another Appointment
@@ -295,11 +307,13 @@ export default function Booking() {
             className="mt-14 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]"
           >
 
-            {/* LEFT SIDE */}
+            {/* LEFT */}
+
             <div className="border border-white/10 bg-lume-espresso p-6 md:p-10">
               <div className="space-y-7">
 
                 {/* SERVICE */}
+
                 <div>
                   <label
                     htmlFor="serviceId"
@@ -342,6 +356,7 @@ export default function Booking() {
                 </div>
 
                 {/* DATE */}
+
                 <div>
                   <label
                     htmlFor="date"
@@ -363,6 +378,7 @@ export default function Booking() {
                 </div>
 
                 {/* TIME */}
+
                 <div>
                   <label className="mb-3 block text-xs uppercase tracking-wider text-lume-grey">
                     Preferred time
@@ -373,7 +389,9 @@ export default function Booking() {
                       <button
                         key={time}
                         type="button"
-                        onClick={() => handleTimeSelect(time)}
+                        onClick={() =>
+                          handleTimeSelect(time)
+                        }
                         className={`border px-3 py-3 text-sm transition ${
                           formData.time === time
                             ? "border-lume-cream bg-lume-cream font-semibold text-lume-charcoal"
@@ -392,7 +410,8 @@ export default function Booking() {
                   )}
                 </div>
 
-                {/* CUSTOMER DETAILS */}
+                {/* CUSTOMER */}
+
                 <div className="border-t border-white/10 pt-7">
                   <h2 className="font-display text-2xl text-lume-cream">
                     Your details
@@ -400,7 +419,6 @@ export default function Booking() {
 
                   <div className="mt-6 space-y-5">
 
-                    {/* NAME */}
                     <div>
                       <label
                         htmlFor="name"
@@ -421,7 +439,6 @@ export default function Booking() {
                       />
                     </div>
 
-                    {/* EMAIL */}
                     <div>
                       <label
                         htmlFor="email"
@@ -442,7 +459,6 @@ export default function Booking() {
                       />
                     </div>
 
-                    {/* PHONE */}
                     <div>
                       <label
                         htmlFor="phone"
@@ -467,6 +483,7 @@ export default function Booking() {
                 </div>
 
                 {/* ERROR */}
+
                 {submitError && (
                   <div className="border border-red-500/20 bg-red-950/20 p-4">
                     <p className="text-xs leading-5 text-red-400">
@@ -476,6 +493,7 @@ export default function Booking() {
                 )}
 
                 {/* SUBMIT */}
+
                 <button
                   type="submit"
                   disabled={
@@ -494,8 +512,8 @@ export default function Booking() {
             </div>
 
             {/* SUMMARY */}
-            <aside className="h-fit border border-white/10 bg-lume-espresso p-7 text-lume-cream lg:sticky lg:top-32">
 
+            <aside className="h-fit border border-white/10 bg-lume-espresso p-7 text-lume-cream lg:sticky lg:top-32">
               <p className="text-xs uppercase tracking-[0.25em] text-lume-grey">
                 Booking summary
               </p>
@@ -511,7 +529,6 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Service
                     </p>
-
                     <p className="mt-1 font-medium text-lume-cream">
                       {selectedService.name}
                     </p>
@@ -521,7 +538,6 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Duration
                     </p>
-
                     <p className="mt-1 text-lume-cream/90">
                       {selectedService.duration} minutes
                     </p>
@@ -531,7 +547,6 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Date
                     </p>
-
                     <p className="mt-1 text-lume-cream/90">
                       {formData.date || "Not selected"}
                     </p>
@@ -541,7 +556,6 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Time
                     </p>
-
                     <p className="mt-1 text-lume-cream/90">
                       {formData.time || "Not selected"}
                     </p>
@@ -551,9 +565,9 @@ export default function Booking() {
 
                     <div className="flex justify-between text-sm text-lume-cream/90">
                       <span>Service</span>
-
                       <span className="font-medium text-lume-cream">
-                        ₦{selectedService.price.toLocaleString()}
+                        ₦
+                        {selectedService.price.toLocaleString()}
                       </span>
                     </div>
 
@@ -561,22 +575,21 @@ export default function Booking() {
                       <span>
                         Deposit ({DEPOSIT_PERCENTAGE}%)
                       </span>
-
                       <span className="font-medium text-lume-cream">
-                        ₦{depositAmount.toLocaleString()}
+                        ₦
+                        {depositAmount.toLocaleString()}
                       </span>
                     </div>
 
                     <div className="mt-3 flex justify-between text-sm text-lume-grey">
                       <span>Balance</span>
-
                       <span className="font-medium text-lume-cream/90">
-                        ₦{balanceAmount.toLocaleString()}
+                        ₦
+                        {balanceAmount.toLocaleString()}
                       </span>
                     </div>
 
                   </div>
-
                 </div>
               ) : (
                 <p className="mt-8 text-sm leading-7 text-lume-grey">
@@ -585,7 +598,6 @@ export default function Booking() {
                 </p>
               )}
 
-              {/* POLICIES */}
               <div className="mt-8 border-t border-white/10 pt-6">
                 <p className="text-xs uppercase tracking-wider text-lume-grey">
                   Important
@@ -604,7 +616,6 @@ export default function Booking() {
               >
                 View all services
               </Link>
-
             </aside>
 
           </form>

@@ -1,38 +1,43 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, {
+  Document,
+  Schema,
+} from "mongoose";
 
-export interface IBlockedSlot extends Document {
+export interface IBlockedSlot
+  extends Document {
   date: string;
   startTime?: string;
   endTime?: string;
   reason?: string;
 }
 
-const blockedSlotSchema = new Schema<IBlockedSlot>(
-  {
-    date: {
-      type: String,
-      required: true,
-    },
+const blockedSlotSchema =
+  new Schema<IBlockedSlot>(
+    {
+      date: {
+        type: String,
+        required: true,
+      },
 
-    startTime: {
-      type: String,
-      required: true,
-    },
+      startTime: {
+        type: String,
+        required: false,
+      },
 
-    endTime: {
-      type: String,
-      required: true,
-    },
+      endTime: {
+        type: String,
+        required: false,
+      },
 
-    reason: {
-      type: String,
-      trim: true,
+      reason: {
+        type: String,
+        trim: true,
+      },
     },
-  },
-  {
-    timestamps: true,
-  }
-);
+    {
+      timestamps: true,
+    }
+  );
 
 export default mongoose.model<IBlockedSlot>(
   "BlockedSlot",

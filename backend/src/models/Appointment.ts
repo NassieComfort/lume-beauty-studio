@@ -1,6 +1,10 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, {
+  Document,
+  Schema,
+} from "mongoose";
 
-export interface IAppointment extends Document {
+export interface IAppointment
+  extends Document {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -10,13 +14,18 @@ export interface IAppointment extends Document {
   service: mongoose.Types.ObjectId;
 
   appointmentDate: Date;
+
   startTime: string;
   endTime: string;
 
   price: number;
   depositAmount: number;
 
-  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentStatus:
+    | "pending"
+    | "paid"
+    | "failed"
+    | "refunded";
 
   status:
     | "pending"
@@ -32,92 +41,100 @@ export interface IAppointment extends Document {
   updatedAt: Date;
 }
 
-const appointmentSchema = new Schema<IAppointment>(
-  {
-    customerName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+const appointmentSchema =
+  new Schema<IAppointment>(
+    {
+      customerName: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    customerEmail: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-    },
+      customerEmail: {
+        type: String,
+        required: true,
+        lowercase: true,
+        trim: true,
+      },
 
-    customerPhone: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      customerPhone: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: false,
-    },
+      user: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: false,
+      },
 
-    service: {
-      type: Schema.Types.ObjectId,
-      ref: "Service",
-      required: true,
-    },
+      service: {
+        type: Schema.Types.ObjectId,
+        ref: "Service",
+        required: true,
+      },
 
-    appointmentDate: {
-      type: Date,
-      required: true,
-    },
+      appointmentDate: {
+        type: Date,
+        required: true,
+      },
 
-    startTime: {
-      type: String,
-      required: true,
-    },
+      startTime: {
+        type: String,
+        required: true,
+      },
 
-    endTime: {
-      type: String,
-      required: true,
-    },
+      endTime: {
+        type: String,
+        required: true,
+      },
 
-    price: {
-      type: Number,
-      required: true,
-    },
+      price: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
 
-    depositAmount: {
-      type: Number,
-      required: true,
-    },
+      depositAmount: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
 
-    paymentStatus: {
-      type: String,
-      enum: ["pending", "paid", "failed", "refunded"],
-      default: "pending",
-    },
+      paymentStatus: {
+        type: String,
+        enum: [
+          "pending",
+          "paid",
+          "failed",
+          "refunded",
+        ],
+        default: "pending",
+      },
 
-    status: {
-      type: String,
-      enum: [
-        "pending",
-        "confirmed",
-        "completed",
-        "cancelled",
-        "rescheduled",
-        "no-show",
-      ],
-      default: "pending",
-    },
+      status: {
+        type: String,
+        enum: [
+          "pending",
+          "confirmed",
+          "completed",
+          "cancelled",
+          "rescheduled",
+          "no-show",
+        ],
+        default: "pending",
+      },
 
-    notes: {
-      type: String,
-      trim: true,
+      notes: {
+        type: String,
+        trim: true,
+      },
     },
-  },
-  {
-    timestamps: true,
-  }
-);
+    {
+      timestamps: true,
+    }
+  );
 
 export default mongoose.model<IAppointment>(
   "Appointment",

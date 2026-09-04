@@ -6,9 +6,13 @@ import {
   getAppointmentById,
   updateAppointmentStatus,
   cancelAppointment,
-} from "../controllers/booking.controller";
+} from "../controllers/appointment.controller";
 
 const router = Router();
+
+// =========================
+// APPOINTMENTS
+// =========================
 
 // Create appointment
 router.post("/", createAppointment);
@@ -20,9 +24,15 @@ router.get("/", getAllAppointments);
 router.get("/:id", getAppointmentById);
 
 // Update appointment status
-router.patch("/:id", updateAppointmentStatus);
+router.patch(
+  "/:id",
+  updateAppointmentStatus
+);
 
 // Cancel appointment
-router.patch("/:id/cancel", cancelAppointment);
+router.patch(
+  "/:id/cancel",
+  cancelAppointment
+);
 
 export default router;
