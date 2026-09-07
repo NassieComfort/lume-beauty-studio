@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import {
   registerUser,
   loginUser,
+  updateAdminAccount,
 } from "../services/auth.service";
 
 export const register = async (
@@ -58,6 +59,35 @@ export const getMe = async (
       success: true,
       user: req.user,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { currentPassword, email, newPassword } = req.body;
+
+    if (!req.user || !currentPassword || !email) {
+      return next(new Error("Current password and email are required"));
+    }
+
+    if (newPassword && newPassword.length < 6) {
+      return next(new Error("New password must be at least 6 characters"));
+    }
+
+    const result = await updateAdminAccount(
+      req.user.id,
+      currentPassword,
+      email,
+      newPassword
+    );
+
+    res.json({ success: true, message: "Admin account updated", data: result });
   } catch (error) {
     next(error);
   }

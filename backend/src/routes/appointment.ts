@@ -1,38 +1,25 @@
 import { Router } from "express";
-
 import {
   createAppointment,
-  getAllAppointments,
   getAppointmentById,
-  updateAppointmentStatus,
   cancelAppointment,
 } from "../controllers/appointment.controller";
 
 const router = Router();
 
-// =========================
-// APPOINTMENTS
-// =========================
+/*
+|--------------------------------------------------------------------------
+| Public & Guest Booking Routes
+|--------------------------------------------------------------------------
+*/
 
-// Create appointment
+// Create a new booking
 router.post("/", createAppointment);
 
-// Get all appointments
-router.get("/", getAllAppointments);
-
-// Get appointment by ID
+// Fetch a single appointment details (e.g. guest confirmation screen)
 router.get("/:id", getAppointmentById);
 
-// Update appointment status
-router.patch(
-  "/:id",
-  updateAppointmentStatus
-);
-
-// Cancel appointment
-router.patch(
-  "/:id/cancel",
-  cancelAppointment
-);
+// Public/Client-initiated cancellation (using booking reference or ID)
+router.patch("/:id/cancel", cancelAppointment);
 
 export default router;

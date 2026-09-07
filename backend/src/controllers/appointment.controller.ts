@@ -40,6 +40,12 @@ const minutesToTime = (minutes: number): string => {
   return `${hours}:${mins}`;
 };
 
+// Normalized Date Parser (UTC Midnight for consistent Mongo queries)
+const parseLocalDate = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+};
+
 // =========================
 // CREATE APPOINTMENT
 // =========================
@@ -50,11 +56,6 @@ export const createAppointment = async (
   next: NextFunction
 ) => {
   try {
-    console.log("=================================");
-    console.log("CREATE APPOINTMENT REQUEST");
-    console.log("Request body:", req.body);
-    console.log("=================================");
-
     const {
       serviceId,
       date,
@@ -65,10 +66,6 @@ export const createAppointment = async (
       notes,
     } = req.body;
 
-    // =========================
-    // REQUIRED FIELDS
-    // =========================
-
     if (
       !serviceId ||
       !date ||
@@ -77,34 +74,15 @@ export const createAppointment = async (
       !guestEmail ||
       !guestPhone
     ) {
-      console.log("❌ Missing required booking fields");
-
       return next(
-        new AppError(
-          "Please provide all required booking details.",
-          400
-        )
+        new AppError("Please provide all required booking details.", 400)
       );
     }
-
-    // =========================
-    // VALIDATE TIME
-    // =========================
 
     const requestedStart = timeToMinutes(startTime);
-
     if (Number.isNaN(requestedStart)) {
-      return next(
-        new AppError(
-          "Invalid appointment time.",
-          400
-        )
-      );
+      return next(new AppError("Invalid appointment time format.", 400));
     }
-
-    // =========================
-    // FIND SERVICE
-    // =========================
 
     const service = await Service.findOne({
       _id: serviceId,
@@ -112,76 +90,38 @@ export const createAppointment = async (
     });
 
     if (!service) {
-      return next(
-        new AppError(
-          "Service not found.",
-          404
-        )
-      );
+      return next(new AppError("Selected service is not available.", 404));
     }
 
-    // =========================
-    // CALCULATE END TIME
-    // =========================
-
-    const requestedEnd =
-      requestedStart + service.duration;
-
+    const requestedEnd = requestedStart + service.duration;
     const endTime = minutesToTime(requestedEnd);
 
-    // =========================
-    // VALIDATE DATE
-    // =========================
-
-    const appointmentDate = new Date(
-      `${date}T00:00:00`
-    );
+    const appointmentDate = parseLocalDate(date);
 
     if (Number.isNaN(appointmentDate.getTime())) {
-      return next(
-        new AppError(
-          "Invalid appointment date.",
-          400
-        )
-      );
+      return next(new AppError("Invalid appointment date.", 400));
     }
 
-    // Prevent booking dates in the past
-
+    // Check past dates
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     if (appointmentDate < today) {
       return next(
-        new AppError(
-          "Appointments cannot be booked for a past date.",
-          400
-        )
+        new AppError("Appointments cannot be booked for a past date.", 400)
       );
     }
 
-    // =========================
-    // CHECK AVAILABILITY
-    // =========================
-
-    const dayOfWeek = appointmentDate.getDay();
-
-    // Fetch availability record or default to open hours (09:00 - 18:00)
-    const availability = (await Availability.findOne({
-      dayOfWeek,
-    })) ?? {
+    // Check Day of Week Availability
+    const dayOfWeek = appointmentDate.getUTCDay();
+    const availability = (await Availability.findOne({ dayOfWeek })) ?? {
       isOpen: true,
       openingTime: "09:00",
       closingTime: "18:00",
     };
 
     if (!availability.isOpen) {
-      return next(
-        new AppError(
-          "The studio is closed on this day.",
-          400
-        )
-      );
+      return next(new AppError("The studio is closed on this day.", 400));
     }
 
     const openingTime = availability.openingTime ?? "09:00";
@@ -190,179 +130,87 @@ export const createAppointment = async (
     const openingMinutes = timeToMinutes(openingTime);
     const closingMinutes = timeToMinutes(closingTime);
 
-    // Before opening
-
     if (requestedStart < openingMinutes) {
       return next(
         new AppError(
-          `Selected time is before opening hours. The studio opens at ${openingTime}.`,
+          `Selected time is before opening hours. Studio opens at ${openingTime}.`,
           400
         )
       );
     }
-
-    // After closing
 
     if (requestedEnd > closingMinutes) {
       return next(
         new AppError(
-          `This appointment would end at ${endTime}, which is after closing time (${closingTime}).`,
+          `Appointment ends at ${endTime}, which is past closing time (${closingTime}).`,
           400
         )
       );
     }
 
-    // =========================
-    // CHECK BLOCKED SLOTS
-    // =========================
-
-    const blockedSlots =
-      await BlockedSlot.find({
-        date,
-      });
+    // Check Blocked Slots
+    const blockedSlots = await BlockedSlot.find({ date });
 
     for (const blocked of blockedSlots) {
-      // Full-day blocked slot
-
-      if (
-        !blocked.startTime ||
-        !blocked.endTime
-      ) {
+      if (!blocked.startTime || !blocked.endTime) {
         return next(
-          new AppError(
-            "The studio is unavailable on this date.",
-            400
-          )
+          new AppError("The studio is unavailable on this date.", 400)
         );
       }
 
-      const blockedStart = timeToMinutes(
-        blocked.startTime
-      );
+      const blockedStart = timeToMinutes(blocked.startTime);
+      const blockedEnd = timeToMinutes(blocked.endTime);
 
-      const blockedEnd = timeToMinutes(
-        blocked.endTime
-      );
-
-      const overlaps =
-        requestedStart < blockedEnd &&
-        requestedEnd > blockedStart;
-
-      if (overlaps) {
+      if (requestedStart < blockedEnd && requestedEnd > blockedStart) {
         return next(
-          new AppError(
-            "Selected time is unavailable.",
-            400
-          )
+          new AppError("Selected time overlaps with a blocked slot.", 400)
         );
       }
     }
 
-    // =========================
-    // CHECK EXISTING APPOINTMENTS
-    // =========================
+    // Check Existing Appointments
+    const existingAppointments = await Appointment.find({
+      appointmentDate,
+      status: { $in: ["pending", "confirmed"] },
+    });
 
-    const existingAppointments =
-      await Appointment.find({
-        appointmentDate,
-        status: {
-          $in: [
-            "pending",
-            "confirmed",
-          ],
-        },
-      });
+    for (const existing of existingAppointments) {
+      const existingStart = timeToMinutes(existing.startTime);
+      const existingEnd = timeToMinutes(existing.endTime);
 
-    for (
-      const existingAppointment of existingAppointments
-    ) {
-      const existingStart = timeToMinutes(
-        existingAppointment.startTime
-      );
-
-      const existingEnd = timeToMinutes(
-        existingAppointment.endTime
-      );
-
-      const overlaps =
-        requestedStart < existingEnd &&
-        requestedEnd > existingStart;
-
-      if (overlaps) {
+      if (requestedStart < existingEnd && requestedEnd > existingStart) {
         return next(
-          new AppError(
-            "This time slot has already been booked.",
-            409
-          )
+          new AppError("This time slot has already been booked.", 409)
         );
       }
     }
 
-    // =========================
-    // CALCULATE PRICE
-    // =========================
-
+    // Financial calculations
     const price = service.price;
+    const depositAmount = price * (DEPOSIT_PERCENTAGE / 100);
 
-    const depositAmount =
-      price *
-      (DEPOSIT_PERCENTAGE / 100);
-
-    // =========================
-    // CREATE APPOINTMENT
-    // =========================
-
-    const appointment =
-      await Appointment.create({
-        customerName: guestName.trim(),
-
-        customerEmail:
-          guestEmail.trim().toLowerCase(),
-
-        customerPhone:
-          guestPhone.trim(),
-
-        service: service._id,
-
-        appointmentDate,
-
-        startTime,
-
-        endTime,
-
-        price,
-
-        depositAmount,
-
-        paymentStatus: "pending",
-
-        status: "pending",
-
-        notes: notes?.trim(),
-      });
-
-    console.log(
-      "✅ Appointment created:",
-      appointment._id
-    );
-
-    // =========================
-    // RESPONSE
-    // =========================
+    const appointment = await Appointment.create({
+      customerName: guestName.trim(),
+      customerEmail: guestEmail.trim().toLowerCase(),
+      customerPhone: guestPhone.trim(),
+      service: service._id,
+      appointmentDate,
+      startTime,
+      endTime,
+      price,
+      depositAmount,
+      paymentStatus: "pending",
+      status: "pending",
+      notes: notes?.trim(),
+    });
 
     return res.status(201).json({
       success: true,
-      message:
-        "Appointment request submitted successfully.",
+      message: "Appointment request submitted successfully.",
       data: appointment,
     });
   } catch (error) {
-    console.error(
-      "❌ Create appointment error:",
-      error
-    );
-
-    next(error);
+    return next(error);
   }
 };
 
@@ -376,16 +224,9 @@ export const getAllAppointments = async (
   next: NextFunction
 ) => {
   try {
-    const appointments =
-      await Appointment.find()
-        .populate(
-          "service",
-          "name price duration category"
-        )
-        .sort({
-          appointmentDate: 1,
-          startTime: 1,
-        });
+    const appointments = await Appointment.find()
+      .populate("service", "name price duration category")
+      .sort({ appointmentDate: 1, startTime: 1 });
 
     return res.json({
       success: true,
@@ -393,7 +234,7 @@ export const getAllAppointments = async (
       data: appointments,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -407,21 +248,13 @@ export const getAppointmentById = async (
   next: NextFunction
 ) => {
   try {
-    const appointment =
-      await Appointment.findById(
-        req.params.id
-      ).populate(
-        "service",
-        "name price duration category"
-      );
+    const appointment = await Appointment.findById(req.params.id).populate(
+      "service",
+      "name price duration category"
+    );
 
     if (!appointment) {
-      return next(
-        new AppError(
-          "Appointment not found.",
-          404
-        )
-      );
+      return next(new AppError("Appointment not found.", 404));
     }
 
     return res.json({
@@ -429,7 +262,7 @@ export const getAppointmentById = async (
       data: appointment,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -437,64 +270,82 @@ export const getAppointmentById = async (
 // UPDATE STATUS
 // =========================
 
-export const updateAppointmentStatus =
-  async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const { status } = req.body;
+export const updateAppointmentStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { status } = req.body;
+    const allowedStatuses = [
+      "pending",
+      "confirmed",
+      "completed",
+      "cancelled",
+      "rescheduled",
+      "no-show",
+    ];
 
-      const allowedStatuses = [
-        "pending",
-        "confirmed",
-        "completed",
-        "cancelled",
-        "rescheduled",
-        "no-show",
-      ];
-
-      if (
-        !allowedStatuses.includes(status)
-      ) {
-        return next(
-          new AppError(
-            "Invalid appointment status.",
-            400
-          )
-        );
-      }
-
-      const appointment =
-        await Appointment.findByIdAndUpdate(
-          req.params.id,
-          { status },
-          {
-            new: true,
-            runValidators: true,
-          }
-        );
-
-      if (!appointment) {
-        return next(
-          new AppError(
-            "Appointment not found.",
-            404
-          )
-        );
-      }
-
-      return res.json({
-        success: true,
-        message:
-          "Appointment status updated successfully.",
-        data: appointment,
-      });
-    } catch (error) {
-      next(error);
+    if (!allowedStatuses.includes(status)) {
+      return next(new AppError("Invalid appointment status.", 400));
     }
-  };
+
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!appointment) {
+      return next(new AppError("Appointment not found.", 404));
+    }
+
+    return res.json({
+      success: true,
+      message: "Appointment status updated successfully.",
+      data: appointment,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// =========================
+// UPDATE PAYMENT
+// =========================
+
+export const updateAppointmentPayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { paymentStatus } = req.body;
+    const allowedStatuses = ["pending", "paid", "failed", "refunded"];
+
+    if (!allowedStatuses.includes(paymentStatus)) {
+      return next(new AppError("Invalid payment status.", 400));
+    }
+
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { paymentStatus },
+      { new: true, runValidators: true }
+    );
+
+    if (!appointment) {
+      return next(new AppError("Appointment not found.", 404));
+    }
+
+    return res.json({
+      success: true,
+      message: "Payment status updated successfully.",
+      data: appointment,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
 // =========================
 // CANCEL APPOINTMENT
@@ -506,53 +357,33 @@ export const cancelAppointment = async (
   next: NextFunction
 ) => {
   try {
-    const appointment =
-      await Appointment.findById(
-        req.params.id
-      );
+    const appointment = await Appointment.findById(req.params.id);
 
     if (!appointment) {
+      return next(new AppError("Appointment not found.", 404));
+    }
+
+    if (appointment.status === "completed") {
       return next(
-        new AppError(
-          "Appointment not found.",
-          404
-        )
+        new AppError("Completed appointments cannot be cancelled.", 400)
       );
     }
 
-    if (
-      appointment.status === "completed"
-    ) {
+    if (appointment.status === "cancelled") {
       return next(
-        new AppError(
-          "Completed appointments cannot be cancelled.",
-          400
-        )
-      );
-    }
-
-    if (
-      appointment.status === "cancelled"
-    ) {
-      return next(
-        new AppError(
-          "Appointment is already cancelled.",
-          400
-        )
+        new AppError("Appointment is already cancelled.", 400)
       );
     }
 
     appointment.status = "cancelled";
-
     await appointment.save();
 
     return res.json({
       success: true,
-      message:
-        "Appointment cancelled successfully.",
+      message: "Appointment cancelled successfully.",
       data: appointment,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };

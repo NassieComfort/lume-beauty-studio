@@ -44,14 +44,14 @@ export default function Hero() {
 
             <Link
               to="/booking"
-              className="rounded-full bg-lume-cream px-7 py-3.5 text-sm font-medium text-lume-charcoal transition hover:bg-white"
+              className="rounded-full bg-lume-cream px-7 py-3.5 text-sm font-medium text-lume-charcoal transition-all duration-200"
             >
               Book Appointment
             </Link>
 
             <Link
               to="/services"
-              className="rounded-full border border-lume-cream/40 px-7 py-3.5 text-sm transition hover:bg-lume-cream hover:text-lume-charcoal"
+              className="rounded-full border border-lume-cream/40 px-7 py-3.5 text-sm transition hover:bg-lume-cream hover:text-lume-charcoal font-medium text-lume-cream"
             >
               Explore Services
             </Link>

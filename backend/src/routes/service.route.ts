@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import {
   getServices,
   getSingleService,
@@ -7,33 +8,30 @@ import {
   removeService,
 } from "../controllers/service.controller";
 
-import protect from "../middleware/protect";
+import protect from "../middleware/auth.middleware";
 import adminOnly from "../middleware/adminOnly";
 
 const router = Router();
 
+/*
+|--------------------------------------------------------------------------
+| Beauty Services Catalog Routes
+|--------------------------------------------------------------------------
+*/
+
+// Public: Fetch all active services
 router.get("/", getServices);
+
+// Public: Fetch single service details
 router.get("/:id", getSingleService);
 
-router.post(
-  "/",
-  protect,
-  adminOnly,
-  createNewService
-);
+// Admin: Add a new service to the catalog
+router.post("/", protect, adminOnly, createNewService);
 
-router.patch(
-  "/:id",
-  protect,
-  adminOnly,
-  editService
-);
+// Admin: Edit service name, price, or duration
+router.patch("/:id", protect, adminOnly, editService);
 
-router.delete(
-  "/:id",
-  protect,
-  adminOnly,
-  removeService
-);
+// Admin: Delete a service from the catalog
+router.delete("/:id", protect, adminOnly, removeService);
 
 export default router;

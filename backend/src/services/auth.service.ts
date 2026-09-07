@@ -78,3 +78,54 @@ export const loginUser = async (
     token,
   };
 };
+
+export const updateAdminAccount = async (
+  userId: string,
+  currentPassword: string,
+  email: string,
+  newPassword?: string
+) => {
+  const user = await User.findById(userId);
+
+  if (!user || user.role !== "admin") {
+    throw new AppError("Admin account not found", 404);
+  }
+
+  if (!(await bcrypt.compare(currentPassword, user.password))) {
+    throw new AppError("Current password is incorrect", 400);
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const emailOwner = await User.findOne({
+    email: normalizedEmail,
+    _id: { $ne: user._id },
+  });
+
+  if (emailOwner) {
+    throw new AppError("That email is already in use", 400);
+  }
+
+  user.email = normalizedEmail;
+
+  if (newPassword) {
+    user.password = await bcrypt.hash(newPassword, 12);
+  }
+
+  await user.save();
+
+  const token = generateToken({
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  });
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+    token,
+  };
+};

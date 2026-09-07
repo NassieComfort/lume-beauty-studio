@@ -256,7 +256,7 @@ export default function Booking() {
   // =========================
 
   return (
-    <section className="min-h-screen bg-lume-charcoal px-6 pb-24 pt-40 lg:px-10">
+    <section className="min-h-screen bg-[radial-gradient(circle_at_top_right,_#4a3028_0%,_#30211d_44%,_#1e1513_100%)] px-6 pb-24 pt-40 text-[#f7f0e9] lg:px-10">
       <div className="mx-auto max-w-6xl">
 
         {/* HEADER */}
@@ -266,11 +266,11 @@ export default function Booking() {
             Appointments
           </p>
 
-          <h1 className="mt-5 font-display text-5xl text-lume-cream md:text-7xl">
+          <h1 className="mt-5 font-display text-5xl text-[#f7f0e9] md:text-7xl">
             Book your Lume experience.
           </h1>
 
-          <p className="mt-6 max-w-2xl text-sm leading-7 text-lume-cream/60 md:text-base">
+          <p className="mt-6 max-w-2xl text-sm leading-7 text-[#d4c2b8] md:text-base">
             Choose your service, preferred date and available
             time. No account is required to request an
             appointment.
@@ -309,7 +309,7 @@ export default function Booking() {
 
             {/* LEFT */}
 
-            <div className="border border-white/10 bg-lume-espresso p-6 md:p-10">
+            <div className="border border-[#b89272]/25 bg-[#3b2119]/95 p-6 shadow-[0_24px_80px_rgba(12,7,6,0.3)] md:p-10">
               <div className="space-y-7">
 
                 {/* SERVICE */}
@@ -329,7 +329,7 @@ export default function Booking() {
                     onChange={handleChange}
                     required
                     disabled={loadingServices}
-                    className="w-full border border-white/10 bg-lume-charcoal px-4 py-3.5 text-sm text-lume-cream outline-none focus:border-lume-cream/40 disabled:opacity-50"
+                    className="w-full border border-[#b89272]/30 bg-[#2f211d]/80 px-4 py-3.5 text-sm text-[#f7f0e9] outline-none transition focus:border-[#d2a47e] disabled:opacity-50"
                   >
                     <option value="">
                       {loadingServices
@@ -373,7 +373,7 @@ export default function Booking() {
                     onChange={handleChange}
                     min={todayString}
                     required
-                    className="w-full border border-white/10 bg-lume-charcoal px-4 py-3.5 text-sm text-lume-cream outline-none"
+                    className="w-full border border-[#b89272]/30 bg-[#2f211d]/80 px-4 py-3.5 text-sm text-[#f7f0e9] outline-none transition focus:border-[#d2a47e]"
                   />
                 </div>
 
@@ -394,8 +394,8 @@ export default function Booking() {
                         }
                         className={`border px-3 py-3 text-sm transition ${
                           formData.time === time
-                            ? "border-lume-cream bg-lume-cream font-semibold text-lume-charcoal"
-                            : "border-white/10 bg-lume-charcoal text-lume-cream/70 hover:border-white/30"
+                            ? "border-[#d2a47e] bg-[#d2a47e] font-semibold text-[#2f211d]"
+                            : "border-[#b89272]/30 bg-[#2f211d]/80 text-[#e6d7ce] hover:border-[#d2a47e] hover:bg-[#5a4036]"
                         }`}
                       >
                         {time}
@@ -412,8 +412,8 @@ export default function Booking() {
 
                 {/* CUSTOMER */}
 
-                <div className="border-t border-white/10 pt-7">
-                  <h2 className="font-display text-2xl text-lume-cream">
+                <div className="border-t border-[#b89272]/20 pt-7">
+                  <h2 className="font-display text-2xl text-[#3f2b25]">
                     Your details
                   </h2>
 
@@ -435,7 +435,7 @@ export default function Booking() {
                         onChange={handleChange}
                         required
                         placeholder="Your full name"
-                        className="w-full border border-white/10 bg-lume-charcoal px-4 py-3.5 text-sm text-lume-cream outline-none placeholder:text-lume-cream/30"
+                        className="w-full border border-[#b89272]/30 bg-[#2f211d]/80 px-4 py-3.5 text-sm text-[#f7f0e9] outline-none transition placeholder:text-[#bba79c] focus:border-[#d2a47e]"
                       />
                     </div>
 
@@ -455,7 +455,7 @@ export default function Booking() {
                         onChange={handleChange}
                         required
                         placeholder="you@example.com"
-                        className="w-full border border-white/10 bg-lume-charcoal px-4 py-3.5 text-sm text-lume-cream outline-none placeholder:text-lume-cream/30"
+                        className="w-full border border-[#b89272]/30 bg-[#2f211d]/80 px-4 py-3.5 text-sm text-[#f7f0e9] outline-none transition placeholder:text-[#bba79c] focus:border-[#d2a47e]"
                       />
                     </div>
 
@@ -475,7 +475,7 @@ export default function Booking() {
                         onChange={handleChange}
                         required
                         placeholder="+234"
-                        className="w-full border border-white/10 bg-lume-charcoal px-4 py-3.5 text-sm text-lume-cream outline-none placeholder:text-lume-cream/30"
+                        className="w-full border border-[#b89272]/30 bg-[#2f211d]/80 px-4 py-3.5 text-sm text-[#f7f0e9] outline-none transition placeholder:text-[#bba79c] focus:border-[#d2a47e]"
                       />
                     </div>
 
@@ -513,12 +513,12 @@ export default function Booking() {
 
             {/* SUMMARY */}
 
-            <aside className="h-fit border border-white/10 bg-lume-espresso p-7 text-lume-cream lg:sticky lg:top-32">
+            <aside className="h-fit border border-[#b89272]/25 bg-[#3b2119]/90 p-7 text-[#f7f0e9] shadow-[0_24px_80px_rgba(12,7,6,0.26)] lg:sticky lg:top-32">
               <p className="text-xs uppercase tracking-[0.25em] text-lume-grey">
                 Booking summary
               </p>
 
-              <h2 className="mt-4 font-display text-3xl text-lume-cream">
+              <h2 className="mt-4 font-display text-3xl text-[#f7f0e9]">
                 Your appointment
               </h2>
 
@@ -529,7 +529,7 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Service
                     </p>
-                    <p className="mt-1 font-medium text-lume-cream">
+                    <p className="mt-1 font-medium text-[#f7f0e9]">
                       {selectedService.name}
                     </p>
                   </div>
@@ -538,7 +538,7 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Duration
                     </p>
-                    <p className="mt-1 text-lume-cream/90">
+                    <p className="mt-1 text-[#eadbd2]">
                       {selectedService.duration} minutes
                     </p>
                   </div>
@@ -547,7 +547,7 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Date
                     </p>
-                    <p className="mt-1 text-lume-cream/90">
+                    <p className="mt-1 text-[#eadbd2]">
                       {formData.date || "Not selected"}
                     </p>
                   </div>
@@ -556,7 +556,7 @@ export default function Booking() {
                     <p className="text-xs text-lume-grey">
                       Time
                     </p>
-                    <p className="mt-1 text-lume-cream/90">
+                    <p className="mt-1 text-[#eadbd2]">
                       {formData.time || "Not selected"}
                     </p>
                   </div>

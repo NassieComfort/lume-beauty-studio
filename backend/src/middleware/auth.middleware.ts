@@ -2,9 +2,9 @@ import { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import AppError from "../utils/AppError";
 
-interface JwtPayload {
+interface CustomJwtPayload {
   id: string;
-  email: string;
+  email?: string;
   role: "customer" | "admin";
 }
 
@@ -24,18 +24,17 @@ const protect: RequestHandler = (req, _res, next) => {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET as string
-    ) as JwtPayload;
+      process.env.JWT_SECRET || "fallback_secret"
+    ) as CustomJwtPayload;
 
     req.user = {
       id: decoded.id,
-      email: decoded.email,
       role: decoded.role,
     };
 
-    next();
+    return next();
   } catch {
-    next(new AppError("Invalid or expired token", 401));
+    return next(new AppError("Invalid or expired token", 401));
   }
 };
 

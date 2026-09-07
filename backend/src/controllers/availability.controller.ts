@@ -12,12 +12,12 @@ export const getAvailability = async (
       dayOfWeek: 1,
     });
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       data: availability,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -27,53 +27,39 @@ export const createOrUpdateAvailability = async (
   next: NextFunction
 ) => {
   try {
-    const {
-      dayOfWeek,
-      isOpen,
-      openingTime,
-      closingTime,
-    } = req.body;
+    const { dayOfWeek, isOpen, openingTime, closingTime } = req.body;
 
-    if (
-      dayOfWeek === undefined ||
-      isOpen === undefined
-    ) {
+    if (dayOfWeek === undefined || isOpen === undefined) {
       return next(
-        new AppError(
-          "dayOfWeek and isOpen are required",
-          400
-        )
+        new AppError("dayOfWeek and isOpen are required", 400)
       );
     }
 
     if (dayOfWeek < 0 || dayOfWeek > 6) {
-      return next(
-        new AppError("Invalid day of week", 400)
-      );
+      return next(new AppError("Invalid day of week", 400));
     }
 
-    const availability =
-      await Availability.findOneAndUpdate(
-        { dayOfWeek },
-        {
-          dayOfWeek,
-          isOpen,
-          openingTime,
-          closingTime,
-        },
-        {
-          new: true,
-          upsert: true,
-          runValidators: true,
-        }
-      );
+    const availability = await Availability.findOneAndUpdate(
+      { dayOfWeek },
+      {
+        dayOfWeek,
+        isOpen,
+        openingTime,
+        closingTime,
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      }
+    );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "Availability updated successfully",
       data: availability,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };

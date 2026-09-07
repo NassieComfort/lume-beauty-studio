@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Base API instance or direct URL
 const API_URL = "http://localhost:5000/api/appointments";
 
 // =========================
@@ -44,8 +43,8 @@ export interface Appointment {
 
 export interface CreateAppointmentData {
   serviceId: string;
-  date: string; // "YYYY-MM-DD"
-  startTime: string; // "HH:MM"
+  date: string;
+  startTime: string;
   guestName: string;
   guestEmail: string;
   guestPhone: string;
@@ -56,17 +55,11 @@ export interface CreateAppointmentData {
 // API METHODS
 // =========================
 
-/**
- * Public: Submit a guest appointment booking
- */
 export const createAppointment = async (data: CreateAppointmentData) => {
   const response = await axios.post(API_URL, data);
   return response.data;
 };
 
-/**
- * Admin: Fetch all salon appointments
- */
 export const getAllAppointments = async (): Promise<{
   success: boolean;
   count: number;
@@ -76,9 +69,6 @@ export const getAllAppointments = async (): Promise<{
   return response.data;
 };
 
-/**
- * Admin: Update appointment status (pending, confirmed, completed, etc.)
- */
 export const updateAppointmentStatus = async (
   id: string,
   status: AppointmentStatus
@@ -87,9 +77,6 @@ export const updateAppointmentStatus = async (
   return response.data;
 };
 
-/**
- * Admin: Update payment status (pending, paid, etc.)
- */
 export const updateAppointmentPayment = async (
   id: string,
   paymentStatus: PaymentStatus
@@ -100,9 +87,6 @@ export const updateAppointmentPayment = async (
   return response.data;
 };
 
-/**
- * Admin: Cancel an appointment
- */
 export const cancelAppointment = async (id: string) => {
   const response = await axios.patch(`${API_URL}/${id}/cancel`);
   return response.data;

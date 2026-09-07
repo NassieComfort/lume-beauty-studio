@@ -1,7 +1,15 @@
-import AppRoutes from "./src/routes/AppRouters";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AdminAppointments from "./src/pages/admin/AdminAppointments";
 
-function App() {
-  return <AppRoutes />
+export default function AppRoutes() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Admin Routes */}
+        <Route path="/admin/appointments" element={<AdminAppointments />} />
+        
+        {/* Fallback or other routes */}
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App;
