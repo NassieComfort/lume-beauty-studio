@@ -119,13 +119,13 @@ export const updateAdminAccount = async (account: {
 };
 
 export const getAdminAppointments = async () => {
-  return adminFetch("/appointments");
+  return adminFetch("/admin/appointments");
 };
 
 export const getAdminAppointment = async (
   id: string
 ) => {
-  return adminFetch(`/appointments/${id}`);
+  return adminFetch(`/admin/appointments/${id}`);
 };
 
 export const updateAppointmentStatus = async (
@@ -154,7 +154,7 @@ export const cancelAppointment = async (
   id: string
 ) => {
   return adminFetch(
-    `/appointments/${id}/cancel`,
+    `/admin/appointments/${id}/cancel`,
     {
       method: "PATCH",
     }
