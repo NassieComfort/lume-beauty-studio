@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import lumeLogo from "../../assets/public/logo/lume logo.jpeg";
 
 
 type IconName =
@@ -145,10 +146,11 @@ export default function AdminLayout() {
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <div className="admin-brand">
-          <div className="admin-brand-name">LUME</div>
-          <div className="admin-brand-subtitle">
-            Beauty Studio
-          </div>
+          <img
+            src={lumeLogo}
+            alt="Lume Beauty Studio"
+            className="admin-brand-logo"
+          />
         </div>
 
         <nav className="admin-navigation">

@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
+import lumeLogo from "../assets/public/logo/lume logo.jpeg";
 
 export default function Navbar() {
   return (
@@ -8,9 +9,13 @@ export default function Navbar() {
 
         <Link
           to="/"
-          className="font-display text-2xl tracking-wide"
+          className="block h-12 w-36 overflow-hidden rounded-sm bg-lume-cream"
         >
-          Lume
+          <img
+            src={lumeLogo}
+            alt="Lume Beauty Studio"
+            className="h-full w-full object-contain"
+          />
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">

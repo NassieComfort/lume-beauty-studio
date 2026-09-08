@@ -1,9 +1,14 @@
 import { Request, Response, NextFunction } from "express";
+import bcrypt from "bcrypt";
+
 import {
   registerUser,
   loginUser,
   updateAdminAccount,
 } from "../services/auth.service";
+
+import User from "../models/User";
+import AppError from "../utils/AppError";
 
 export const register = async (
   req: Request,
@@ -64,30 +69,139 @@ export const getMe = async (
   }
 };
 
-export const updateAdmin = async (
+/**
+ * Change password for authenticated user/admin
+ */
+export const changePassword = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { currentPassword, email, newPassword } = req.body;
+    const userId = req.user?.id;
 
-    if (!req.user || !currentPassword || !email) {
-      return next(new Error("Current password and email are required"));
+    const {
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    if (!userId) {
+      return next(
+        new AppError(
+          "Authentication required.",
+          401
+        )
+      );
     }
 
-    if (newPassword && newPassword.length < 6) {
-      return next(new Error("New password must be at least 6 characters"));
+    if (!currentPassword || !newPassword) {
+      return next(
+        new AppError(
+          "Current password and new password are required.",
+          400
+        )
+      );
+    }
+
+    if (newPassword.length < 6) {
+      return next(
+        new AppError(
+          "New password must be at least 6 characters.",
+          400
+        )
+      );
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return next(
+        new AppError("User not found.", 404)
+      );
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!passwordMatches) {
+      return next(
+        new AppError(
+          "Current password is incorrect.",
+          401
+        )
+      );
+    }
+
+    const samePassword = await bcrypt.compare(
+      newPassword,
+      user.password
+    );
+
+    if (samePassword) {
+      return next(
+        new AppError(
+          "New password must be different from your current password.",
+          400
+        )
+      );
+    }
+
+    user.password = await bcrypt.hash(
+      newPassword,
+      12
+    );
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAdminAccountDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+    const { currentPassword, email, newPassword } = req.body;
+
+    if (!userId) {
+      return next(new AppError("Authentication required.", 401));
+    }
+
+    if (!email || !String(email).trim()) {
+      return next(new AppError("Email is required.", 400));
+    }
+
+    if (newPassword && !currentPassword) {
+      return next(
+        new AppError(
+          "Current password is required to change your password.",
+          400
+        )
+      );
     }
 
     const result = await updateAdminAccount(
-      req.user.id,
-      currentPassword,
+      userId,
+      currentPassword || "",
       email,
       newPassword
     );
 
-    res.json({ success: true, message: "Admin account updated", data: result });
+    return res.status(200).json({
+      success: true,
+      message: "Account updated successfully.",
+      data: result,
+    });
   } catch (error) {
     next(error);
   }

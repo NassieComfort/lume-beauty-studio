@@ -51,6 +51,14 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+.admin-brand-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: var(--lume-cream);
+}
+
 .admin-brand-name {
   font-family: Georgia, "Times New Roman", serif;
   font-size: 27px;

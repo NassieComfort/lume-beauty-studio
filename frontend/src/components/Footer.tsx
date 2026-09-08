@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import lumeLogo from "../assets/public/logo/lume logo.jpeg";
 
 export default function Footer() {
   return (
@@ -9,9 +10,11 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-3">
 
           <div>
-            <h2 className="font-display text-3xl">
-              Lume
-            </h2>
+            <img
+              src={lumeLogo}
+              alt="Lume Beauty Studio"
+              className="h-20 w-48 rounded-sm bg-lume-cream object-contain"
+            />
 
             <p className="mt-4 max-w-sm text-sm leading-7 text-lume-grey">
               Elevated beauty experiences designed with
