@@ -16,10 +16,24 @@ export interface ServiceItem {
 }
 
 // Fetch public active services (used by public catalog/Services.tsx)
+  const API_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000"
+).replace(/\/+$/, "");
+
 export const getServices = async (): Promise<ServiceItem[]> => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  const response = await fetch(`${API_URL}/api/services`);
+  const response = await fetch(
+    `${API_URL}/api/services`
+  );
+
   const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Failed to load services."
+    );
+  }
+
   return data.data;
 };
 
