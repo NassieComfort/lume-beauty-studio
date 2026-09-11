@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getServices, type Service } from "../services/serviceApi";
+import { getServices, type ServiceItem } from "../services/serviceApi";
 
 const timeSlots = [
   "09:00",
@@ -17,7 +17,7 @@ const timeSlots = [
 const DEPOSIT_PERCENTAGE = 30;
 
 export default function Booking() {
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [serviceError, setServiceError] = useState("");
 
@@ -198,8 +198,9 @@ export default function Booking() {
     setSubmitError("");
 
     try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const response = await fetch(
-        "http://localhost:5000/api/appointments",
+        `${API_URL}/api/appointments`,
         {
           method: "POST",
           headers: {

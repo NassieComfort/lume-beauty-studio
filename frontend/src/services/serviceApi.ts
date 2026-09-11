@@ -17,7 +17,8 @@ export interface ServiceItem {
 
 // Fetch public active services (used by public catalog/Services.tsx)
 export const getServices = async (): Promise<ServiceItem[]> => {
-  const response = await fetch("http://localhost:5000/api/services");
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const response = await fetch(`${API_URL}/api/services`);
   const data = await response.json();
   return data.data;
 };
