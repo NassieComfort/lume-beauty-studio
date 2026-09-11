@@ -1,27 +1,19 @@
 import { Router } from "express";
 
 import {
-  getAvailability,
-  updateAvailability,
-} from "../controllers/adminAvailability.controller";
+  getRevenue,
+} from "../controllers/revenue.controller";
 
 import protect from "../middleware/auth.middleware";
 import adminOnly from "../middleware/adminOnly";
 
 const router = Router();
 
-router.use(
-  protect,
-  adminOnly
-);
-
 router.get(
   "/",
-  getAvailability
-);
-
-router.put(
-  "/", updateAvailability
+  protect,
+  adminOnly,
+  getRevenue
 );
 
 export default router;

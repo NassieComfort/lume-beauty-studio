@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import ServiceCard from "../components/ServiceCard";
-import {
-  getServices,
-  type Service as ApiService,
-} from "../services/serviceApi";
+import { getServices, type ServiceItem as Service, } from "../services/serviceApi";
 
 import acrylicNails from "../assets/public/Acrylic nails.jpeg";
 import browLamination from "../assets/public/Brow Lamination.jpeg";
@@ -40,7 +37,7 @@ const serviceImages: Record<string, string> = {
 };
 
 export default function Services() {
-  const [services, setServices] = useState<ApiService[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

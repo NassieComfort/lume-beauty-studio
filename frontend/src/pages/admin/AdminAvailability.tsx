@@ -52,32 +52,34 @@ export default function AdminAvailability() {
   };
 
   const saveDay = async (item: Availability) => {
-    setSavingDay(item.dayOfWeek);
-    setMessage("");
-    setError("");
-    try {
-      await updateAdminAvailability(item);
-      setMessage(`${days[item.dayOfWeek]} hours updated successfully.`);
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Unable to save availability.");
-    } finally {
-      setSavingDay(null);
-    }
-  };
+  setSavingDay(item.dayOfWeek);
+  setMessage("");
+  setError("");
+  try {
+    // Wrap single item inside schedule array
+    await updateAdminAvailability({ schedule: [item] } as any);
+    setMessage(`${days[item.dayOfWeek]} hours updated successfully.`);
+  } catch (saveError) {
+    setError(saveError instanceof Error ? saveError.message : "Unable to save availability.");
+  } finally {
+    setSavingDay(null);
+  }
+};
 
-  const saveAllDays = async () => {
-    setSavingAll(true);
-    setMessage("");
-    setError("");
-    try {
-      await Promise.all(availability.map((item) => updateAdminAvailability(item)));
-      setMessage("All schedule changes saved successfully.");
-    } catch (saveError) {
-      setError("Failed to save schedule settings.");
-    } finally {
-      setSavingAll(false);
-    }
-  };
+const saveAllDays = async () => {
+  setSavingAll(true);
+  setMessage("");
+  setError("");
+  try {
+    // Send all days at once in a single batch request
+    await updateAdminAvailability({ schedule: availability } as any);
+    setMessage("All schedule changes saved successfully.");
+  } catch (saveError) {
+    setError("Failed to save schedule settings.");
+  } finally {
+    setSavingAll(false);
+  }
+};
 
   return (
     <div className="p-6 lg:p-10 space-y-8 bg-[#FAF7F3] min-h-screen text-[#292524]">

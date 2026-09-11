@@ -9,27 +9,56 @@ import {
   cancelAppointment,
 } from "../controllers/appointment.controller";
 
+import protect from "../middleware/auth.middleware";
+import adminOnly from "../middleware/adminOnly";
+
 const router = Router();
 
-// Public booking
-router.post("/", createAppointment);
+// ======================================================
+// PUBLIC
+// ======================================================
 
-// Appointment management
-router.get("/", getAllAppointments);
-router.get("/:id", getAppointmentById);
+router.post(
+  "/",
+  createAppointment
+);
+
+// ======================================================
+// ADMIN
+// ======================================================
+
+router.get(
+  "/",
+  protect,
+  adminOnly,
+  getAllAppointments
+);
+
+router.get(
+  "/:id",
+  protect,
+  adminOnly,
+  getAppointmentById
+);
 
 router.patch(
   "/:id",
+  protect,
+  adminOnly,
   updateAppointmentStatus
 );
 
 router.patch(
   "/:id/payment",
+  protect,
+  adminOnly,
   updateAppointmentPayment
 );
 
 router.patch(
   "/:id/cancel",
+  protect,
+  adminOnly,
   cancelAppointment
 );
 

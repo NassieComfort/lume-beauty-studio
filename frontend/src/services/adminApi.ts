@@ -1,3 +1,4 @@
+
 const API_URL = "http://localhost:5000/api";
 
 const getToken = () => {
@@ -197,6 +198,25 @@ export const updateAdminService = async (
   });
 };
 
+
+export const getStudioSettings = async () => {
+  return adminFetch("/admin/settings");
+};
+
+export const updateStudioSettings = async (settings: {
+  studioName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  depositPercentage?: number;
+  latenessGracePeriod?: number;
+  cancellationNoticeHours?: number;
+}) => {
+  return adminFetch("/admin/settings", {
+    method: "PUT",
+    body: JSON.stringify(settings),
+  });
+};
 export const getAdminAvailability = async () => {
   return adminFetch("/availability");
 };

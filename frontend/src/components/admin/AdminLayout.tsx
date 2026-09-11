@@ -1,5 +1,7 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 
+import { Link } from "react-router-dom";
+
 import {
   adminLogout,
   getAdminUser,
@@ -46,14 +48,20 @@ export default function AdminLayout() {
 
       <aside className="hidden lg:flex w-64 border-r border-white/10 flex-col">
 
-        <div className="p-8 border-b border-white/10">
-          <p className="text-xs tracking-[0.3em] uppercase text-lume-grey">
-            Lume
-          </p>
-
-          <h1 className="font-display text-2xl mt-2">
-            Admin
-          </h1>
+       <div className="p-6 border-b border-white/10">
+  <Link to="/admin" className="flex flex-col items-start focus:outline-none group">
+    <div className="flex items-center gap-2">
+      <span className="font-serif text-xl font-normal tracking-[0.2em] text-[#FDFBF7] uppercase leading-none">
+        LUME
+      </span>
+      <span className="text-[9px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded bg-white/10 text-[#D4C3B5] border border-white/10">
+        Admin
+      </span>
+    </div>
+    <span className="text-[8px] font-sans tracking-[0.35em] text-[#D4C3B5] uppercase mt-1 opacity-80">
+      Management Studio
+    </span>
+  </Link>
         </div>
 
         <nav className="flex-1 p-4">

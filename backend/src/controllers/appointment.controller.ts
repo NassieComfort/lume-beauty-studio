@@ -47,27 +47,25 @@ const minutesToTime = (minutes: number): string => {
 // ======================================================
 
 const parseLocalDate = (dateStr: string): Date => {
-  const parts = dateStr.split("-");
-
-  if (parts.length !== 3) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     return new Date("invalid");
   }
 
-  const [year, month, day] = parts.map(Number);
+  const [year, month, day] = dateStr.split("-").map(Number);
+
+  const date = new Date(
+    Date.UTC(year, month - 1, day)
+  );
 
   if (
-    !year ||
-    !month ||
-    !day ||
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > 31
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
   ) {
     return new Date("invalid");
   }
 
-  return new Date(Date.UTC(year, month - 1, day));
+  return date;
 };
 
 // ======================================================
@@ -205,8 +203,7 @@ export const createAppointment = async (
         dayOfWeek,
       });
 
-    // If no availability record exists,
-    // use the default studio hours.
+    // If no availability record exists, use default studio hours
     const studioAvailability = availability ?? {
       isOpen: true,
       openingTime: "09:00",
@@ -418,9 +415,6 @@ export const createAppointment = async (
     // --------------------------------------------------
     // 14. SEND ADMIN EMAIL
     // --------------------------------------------------
-    // IMPORTANT:
-    // Email failure must NOT cancel the booking.
-    // The appointment has already been saved.
 
     try {
       await sendNewBookingEmail({

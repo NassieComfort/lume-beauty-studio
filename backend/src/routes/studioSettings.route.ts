@@ -1,9 +1,9 @@
 import { Router } from "express";
 
 import {
-  getAvailability,
-  updateAvailability,
-} from "../controllers/adminAvailability.controller";
+  getStudioSettings,
+  updateStudioSettings,
+} from "../controllers/studioSettings.controller";
 
 import protect from "../middleware/auth.middleware";
 import adminOnly from "../middleware/adminOnly";
@@ -17,11 +17,12 @@ router.use(
 
 router.get(
   "/",
-  getAvailability
+  getStudioSettings
 );
 
 router.put(
-  "/", updateAvailability
+  "/",
+  updateStudioSettings
 );
 
 export default router;

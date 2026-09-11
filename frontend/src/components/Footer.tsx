@@ -1,27 +1,24 @@
 import { Link } from "react-router-dom";
-import lumeLogo from "../assets/public/logo/lume logo.jpeg";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-lume-charcoal px-6 py-14 lg:px-10">
-
+    <footer className="border-t border-white/10 bg-lume-charcoal px-6 py-14 lg:px-12">
       <div className="mx-auto max-w-7xl">
-
         <div className="grid gap-10 md:grid-cols-3">
-
           <div>
-            <img
-              src={lumeLogo}
-              alt="Lume Beauty Studio"
-              className="h-20 w-48 rounded-sm bg-lume-cream object-contain"
-            />
+            <Link to="/" className="flex flex-col items-start focus:outline-none group">
+              <span className="font-serif text-2xl font-normal tracking-[0.2em] text-[#FDFBF7] uppercase leading-none group-hover:text-[#D4C3B5] transition-colors">
+                LUME
+              </span>
+              <span className="text-[8px] font-sans tracking-[0.35em] text-[#D4C3B5] uppercase mt-1 opacity-90">
+                Beauty Studio
+              </span>
+            </Link>
 
             <p className="mt-4 max-w-sm text-sm leading-7 text-lume-grey">
-              Elevated beauty experiences designed with
-              precision, intention and care.
+              Elevated beauty experiences designed with precision, intention and care.
             </p>
           </div>
-
           <div>
             <h3 className="text-xs uppercase tracking-[0.25em]">
               Explore

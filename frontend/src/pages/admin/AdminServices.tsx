@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit2, Power, X } from "lucide-react";
+import { Plus, Edit2, Power, X, Loader2 } from "lucide-react";
 import {
   getAdminServices,
   createAdminService,
@@ -51,10 +51,15 @@ const serviceImages: Record<string, string> = {
   "Full-Leg Wax": fullLeg,
 };
 
+// Fallback image in case no local image match or user URL exists
+const DEFAULT_IMAGE = classicSet;
+
 export default function AdminServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [modalError, setModalError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -87,6 +92,7 @@ export default function AdminServices() {
   }, []);
 
   const openForm = (service?: Service) => {
+    setModalError("");
     setEditingId(service?._id || null);
     setForm({
       name: service?.name || "",
@@ -101,12 +107,23 @@ export default function AdminServices() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setModalError("");
+    setSubmitting(true);
+
     try {
+      // Guarantee image string is never empty for MongoDB schema requirements
+      const resolvedImage =
+        form.image.trim() ||
+        serviceImages[form.name] ||
+        DEFAULT_IMAGE;
+
       const payload = {
-        ...form,
+        name: form.name.trim(),
+        category: form.category,
+        description: form.description.trim(),
         price: Number(form.price),
         duration: Number(form.duration),
-        image: form.image || serviceImages[form.name] || "",
+        image: resolvedImage,
       };
 
       if (editingId) {
@@ -116,13 +133,15 @@ export default function AdminServices() {
       }
 
       setShowForm(false);
-      await loadServices(); // Re-fetch state directly without browser reload
+      await loadServices();
     } catch (submitError) {
-      setError(
+      setModalError(
         submitError instanceof Error
           ? submitError.message
           : "Unable to save service."
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -170,13 +189,13 @@ export default function AdminServices() {
       {/* Services Grid */}
       {loading ? (
         <div className="p-12 flex justify-center items-center text-[#78716C] text-xs">
-          <div className="w-4 h-4 border-2 border-[#C88A95] border-t-transparent rounded-full animate-spin mr-2"></div>
+          <Loader2 className="w-4 h-4 text-[#C88A95] animate-spin mr-2" />
           Loading services...
         </div>
       ) : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
           {services.map((service) => {
-            const displayImg = serviceImages[service.name] || service.image;
+            const displayImg = serviceImages[service.name] || service.image || DEFAULT_IMAGE;
             const isInactive = service.isActive === false;
 
             return (
@@ -276,6 +295,12 @@ export default function AdminServices() {
               </button>
             </div>
 
+            {modalError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                {modalError}
+              </div>
+            )}
+
             <div className="grid gap-4 sm:grid-cols-2 text-xs">
               <div>
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#78716C] mb-1">
@@ -350,23 +375,48 @@ export default function AdminServices() {
               />
             </div>
 
-            <div className="text-xs">
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#78716C] mb-1">
-                Image URL (Optional)
-              </label>
-              <input
-                placeholder="https://..."
-                value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
-                className="w-full bg-[#FAF7F3] border border-[#E8DFD8] rounded-xl p-3 outline-none focus:border-[#C88A95]"
-              />
-            </div>
+           <div>
+  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#78716C] mb-1">
+    Service Image
+  </label>
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setForm((prev) => ({ ...prev, image: reader.result as string }));
+        };
+        reader.readAsDataURL(file);
+      }
+    }}
+    className="w-full bg-[#FAF7F3] border border-[#E8DFD8] rounded-xl p-2 text-xs text-[#292524] file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-[#3D1E1A] file:text-white hover:file:bg-[#291411]"
+  />
+
+  {/* Image Preview */}
+  {form.image && (
+    <div className="mt-3">
+      <p className="text-[10px] text-[#78716C] mb-1 uppercase tracking-wider">
+        Selected Image Preview:
+      </p>
+      <img
+        src={form.image}
+        alt="Selected preview"
+        className="h-20 w-20 object-cover rounded-xl border border-[#E8DFD8]"
+      />
+    </div>
+  )}
+     </div>
 
             <button
               type="submit"
-              className="w-full bg-[#3D1E1A] text-white py-3 rounded-xl text-xs font-semibold hover:bg-[#291411] transition-colors mt-2"
+              disabled={submitting}
+              className="w-full bg-[#3D1E1A] text-white py-3 rounded-xl text-xs font-semibold hover:bg-[#291411] transition-colors mt-2 disabled:opacity-50 inline-flex items-center justify-center space-x-2"
             >
-              Save Service
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{submitting ? "Saving..." : "Save Service"}</span>
             </button>
           </form>
         </div>

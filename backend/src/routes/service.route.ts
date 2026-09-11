@@ -2,10 +2,12 @@ import { Router } from "express";
 
 import {
   getServices,
-  getSingleService,
-  createNewService,
-  editService,
-  removeService,
+  getServiceById,
+  getAllServicesAdmin,
+  createService,
+  updateService,
+  deleteService,
+  toggleService,
 } from "../controllers/service.controller";
 
 import protect from "../middleware/auth.middleware";
@@ -13,25 +15,18 @@ import adminOnly from "../middleware/adminOnly";
 
 const router = Router();
 
-/*
-|--------------------------------------------------------------------------
-| Beauty Services Catalog Routes
-|--------------------------------------------------------------------------
-*/
-
-// Public: Fetch all active services
+// Public routes (active services only)
 router.get("/", getServices);
+router.get("/:id", getServiceById);
 
-// Public: Fetch single service details
-router.get("/:id", getSingleService);
+// Protected Admin middleware
+router.use(protect, adminOnly);
 
-// Admin: Add a new service to the catalog
-router.post("/", protect, adminOnly, createNewService);
-
-// Admin: Edit service name, price, or duration
-router.patch("/:id", protect, adminOnly, editService);
-
-// Admin: Delete a service from the catalog
-router.delete("/:id", protect, adminOnly, removeService);
+// Protected Admin routes
+router.get("/admin/all", getAllServicesAdmin);
+router.post("/", createService);
+router.patch("/:id", updateService);
+router.delete("/:id", deleteService);
+router.patch("/:id/toggle", toggleService);
 
 export default router;

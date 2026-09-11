@@ -1,100 +1,174 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  getAllServices,
-  getServiceById,
-  createService,
-  updateService,
-  deleteService,
-} from "../services/service.service";
+import Service from "../models/Service";
 
-// Fetch all active beauty services
+// Custom error handling helper (adjust path if needed)
+class AppError extends Error {
+  statusCode: number;
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
+// 1. Get all active public services
 export const getServices = async (
   _req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const services = await getAllServices();
+    const services = await Service.find({ isActive: true }).sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
       data: services,
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-// Fetch single service details by ID
-export const getSingleService = async (
+// 2. Get single service by ID
+export const getServiceById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const service = await getServiceById(req.params.id);
+    const service = await Service.findById(req.params.id);
+
+    if (!service) {
+      return next(new AppError("Service not found", 404));
+    }
 
     return res.status(200).json({
       success: true,
       data: service,
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-// Create a new service (Admin)
-export const createNewService = async (
+// 3. Get all services for Admin (includes inactive)
+export const getAllServicesAdmin = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const services = await Service.find().sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: services,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 4. Create a new service
+export const createService = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const service = await createService(req.body);
+    const { name, category, description, price, duration, image } = req.body;
+
+    if (!name || !category || !description || price === undefined || !duration || !image) {
+      return next(new AppError("Please provide all required fields", 400));
+    }
+
+    const newService = await Service.create({
+      name,
+      category,
+      description,
+      price,
+      duration,
+      image,
+      isActive: true,
+    });
 
     return res.status(201).json({
       success: true,
-      message: "Service created successfully",
-      data: service,
+      data: newService,
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-// Edit service details (Admin)
-export const editService = async (
+// 5. Update existing service details
+export const updateService = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const service = await updateService(req.params.id, req.body);
+    const updatedService = await Service.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedService) {
+      return next(new AppError("Service not found", 404));
+    }
 
     return res.status(200).json({
       success: true,
-      message: "Service updated successfully",
-      data: service,
+      data: updatedService,
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
-// Remove a service (Admin)
-export const removeService = async (
+// 6. Toggle active/inactive status
+export const toggleService = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    await deleteService(req.params.id);
+    const service = await Service.findById(req.params.id);
+
+    if (!service) {
+      return next(new AppError("Service not found", 404));
+    }
+
+    service.isActive = !service.isActive;
+    await service.save();
 
     return res.status(200).json({
       success: true,
-      message: "Service removed successfully",
+      data: service,
     });
   } catch (error) {
-    return next(error);
+    next(error);
+  }
+};
+
+// 7. Delete / Deactivate service
+export const deleteService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const service = await Service.findByIdAndDelete(req.params.id);
+
+    if (!service) {
+      return next(new AppError("Service not found", 404));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Service deleted successfully",
+    });
+  } catch (error) {
+    next(error);
   }
 };

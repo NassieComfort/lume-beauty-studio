@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import SectionHeading from "./SectionHeading";
 import ServiceCard from "./ServiceCard";
-import { getServices, type Service as ApiService } from "../services/serviceApi";
+import { getServices, type ServiceItem as Service } from "../services/serviceApi";
 
 function Services() {
-  const [services, setServices] = useState<ApiService[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -47,23 +47,32 @@ function Services() {
 
         {!loading && !error && (
           <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {services.map((service) => (
-              <ServiceCard
-                key={service._id}
-                name={service.name}
-                category={service.category}
-                description={service.description}
-                price={`₦${service.price.toLocaleString()}`}
-                duration={`${Math.floor(service.duration / 60)} hr${
-                  service.duration >= 120 ? "s" : ""
-                }${
-                  service.duration % 60
-                    ? ` ${service.duration % 60} mins`
-                    : ""
-                }`}
-                image={`http://localhost:5000${service.image}`}
-              />
-            ))}
+            {services.map((service) => {
+              // Ensure image URL resolves correctly whether it starts with a slash or not
+              const imageUrl = service.image
+                ? service.image.startsWith("http")
+                  ? service.image
+                  : `http://localhost:5000${service.image.startsWith("/") ? "" : "/"}${service.image}`
+                : "";
+
+              return (
+                <ServiceCard
+                  key={service._id}
+                  name={service.name}
+                  category={service.category}
+                  description={service.description}
+                  price={`₦${service.price.toLocaleString()}`}
+                  duration={`${Math.floor(service.duration / 60)} hr${
+                    service.duration >= 120 ? "s" : ""
+                  }${
+                    service.duration % 60
+                      ? ` ${service.duration % 60} mins`
+                      : ""
+                  }`}
+                  image={imageUrl}
+                />
+              );
+            })}
           </div>
         )}
       </div>

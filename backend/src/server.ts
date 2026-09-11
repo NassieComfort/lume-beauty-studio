@@ -5,6 +5,7 @@ import path from "path";
 
 import connectDB from "./config/db";
 
+// Public & General Routes
 import authRoutes from "./routes/auth.route";
 import serviceRoutes from "./routes/service.route";
 import appointmentRoutes from "./routes/appointment";
@@ -12,6 +13,13 @@ import availabilityRoutes from "./routes/availability.routes";
 import blockedSlotRoutes from "./routes/blockedSlot.route";
 import healthRoutes from "./routes/health";
 import adminRoutes from "./routes/admin.route";
+
+// Admin Feature Routes
+import adminServiceRoutes from "./routes/adminService.route";
+import adminAvailabilityRoutes from "./routes/availability.routes";
+
+import revenueRoutes from "./routes/revenue.route";
+import studioSettingsRoutes from "./routes/studioSettings.route";
 
 import errorMiddleware from "./middleware/error.middleware";
 
@@ -54,8 +62,8 @@ app.use(
 | BODY PARSERS & STATIC FILES
 |--------------------------------------------------------------------------
 */
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use("/images", express.static(path.join(process.cwd(), "images")));
 
 /*
@@ -72,6 +80,10 @@ app.use("/api/blocked-slots", blockedSlotRoutes);
 
 // Admin Restricted Area
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/services", adminServiceRoutes);
+app.use("/api/admin/availability", adminAvailabilityRoutes);
+app.use("/api/admin/revenue", revenueRoutes);
+app.use("/api/admin/settings", studioSettingsRoutes);
 
 /*
 |--------------------------------------------------------------------------
