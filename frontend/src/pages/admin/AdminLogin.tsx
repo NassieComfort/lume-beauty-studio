@@ -1,5 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { adminLogin } from "../../services/adminApi";
+
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -14,87 +16,39 @@ export default function AdminLogin() {
   const [error, setError] =
     useState("");
 
-  const handleSubmit = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
+ const handleSubmit = async (
+  event: FormEvent<HTMLFormElement>
+) => {
+  event.preventDefault();
 
-    setError("");
+  setError("");
 
-    if (!email.trim() || !password) {
-      setError(
-        "Please enter your email and password."
-      );
-      return;
-    }
+  if (!email.trim() || !password) {
+    setError("Please enter your email and password.");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            password,
-          }),
-        }
-      );
+    await adminLogin(
+      email.trim().toLowerCase(),
+      password
+    );
 
-      const result = await response.json();
+    navigate("/admin");
+  } catch (err) {
+    console.error("Admin login error:", err);
 
-      if (!response.ok) {
-        throw new Error(
-          result.message ||
-            "Unable to sign in."
-        );
-      }
-
-      const user = result.data?.user;
-      const token = result.data?.token;
-
-      if (!user || !token) {
-        throw new Error(
-          "Login response is missing authentication details."
-        );
-      }
-
-      if (user.role !== "admin") {
-        throw new Error(
-          "You do not have permission to access the admin dashboard."
-        );
-      }
-
-      localStorage.setItem(
-        "lume_admin_token",
-        token
-      );
-
-      localStorage.setItem(
-        "lume_admin_user",
-        JSON.stringify(user)
-      );
-
-      navigate("/admin");
-    } catch (err) {
-      console.error(
-        "Admin login error:",
-        err
-      );
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to sign in."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Unable to sign in."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div
