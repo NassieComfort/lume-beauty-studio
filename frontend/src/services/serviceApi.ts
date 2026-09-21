@@ -14,9 +14,9 @@ export interface ServiceItem {
   image: string;
   isActive?: boolean;
 }
-
 // Fetch public active services (used by public catalog/Services.tsx)
-  const API_URL = (
+
+const API_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:5000"
 ).replace(/\/+$/, "");
