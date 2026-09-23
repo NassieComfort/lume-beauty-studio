@@ -17,7 +17,6 @@ export const registerUser = async (
       400
     );
   }
-
   const normalizedEmail =
     email.trim().toLowerCase();
 

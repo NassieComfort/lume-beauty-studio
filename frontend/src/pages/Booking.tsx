@@ -25,6 +25,10 @@ export default function Booking() {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // Booked slots tracking
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
   const [formData, setFormData] = useState({
     serviceId: "",
     date: "",
@@ -65,6 +69,61 @@ export default function Booking() {
   }, []);
 
   // =========================
+  // LOAD BOOKED SLOTS FOR DATE
+  // =========================
+
+  useEffect(() => {
+    if (!formData.date || !formData.serviceId) {
+      setBookedSlots([]);
+      return;
+    }
+
+    const fetchAvailability = async () => {
+      try {
+        setLoadingBookings(true);
+        setBookedSlots([]);
+
+        const API_URL = (
+          import.meta.env.VITE_API_BASE_URL ||
+          "http://localhost:5000"
+        ).replace(/\/+$/, "");
+
+        const params = new URLSearchParams({
+          date: formData.date,
+          serviceId: formData.serviceId,
+        });
+
+        const response = await fetch(
+          `${API_URL}/api/availability/slots?${params.toString()}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Failed to load availability."
+          );
+        }
+
+        setBookedSlots(
+          data.data?.bookedSlots || []
+        );
+      } catch (error) {
+        console.error(
+          "Failed to fetch booking availability:",
+          error
+        );
+
+        setBookedSlots([]);
+      } finally {
+        setLoadingBookings(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [formData.date, formData.serviceId]);
+
+  // =========================
   // SELECTED SERVICE
   // =========================
 
@@ -100,6 +159,8 @@ export default function Booking() {
     setFormData((previous) => ({
       ...previous,
       [name]: value,
+      // Reset time if date changes to prevent conflicting selections
+      ...(name === "date" ? { time: "" } : {}),
     }));
 
     setSubmitError("");
@@ -198,7 +259,7 @@ export default function Booking() {
     setSubmitError("");
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
       const response = await fetch(
         `${API_URL}/api/appointments`,
         {
@@ -237,6 +298,7 @@ export default function Booking() {
         email: "",
         phone: "",
       });
+      setBookedSlots([]);
     } catch (error) {
       console.error("Booking error:", error);
 
@@ -381,27 +443,58 @@ export default function Booking() {
                 {/* TIME */}
 
                 <div>
-                  <label className="mb-3 block text-xs uppercase tracking-wider text-lume-grey">
-                    Preferred time
-                  </label>
+                  <div className="mb-3 flex items-center justify-between">
+                    <label className="block text-xs uppercase tracking-wider text-lume-grey">
+                      Preferred time
+                    </label>
+
+                    {loadingBookings && (
+                      <span className="animate-pulse text-[10px] text-lume-grey">
+                        Checking availability...
+                      </span>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-3 gap-2">
-                    {timeSlots.map((time) => (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() =>
-                          handleTimeSelect(time)
-                        }
-                        className={`border px-3 py-3 text-sm transition ${
-                          formData.time === time
-                            ? "border-[#d2a47e] bg-[#d2a47e] font-semibold text-[#2f211d]"
-                            : "border-[#b89272]/30 bg-[#2f211d]/80 text-[#e6d7ce] hover:border-[#d2a47e] hover:bg-[#5a4036]"
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
+                    {timeSlots.map((time) => {
+                      const isBooked = bookedSlots.includes(time);
+                      const isSelected = formData.time === time;
+
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          disabled={isBooked}
+                          onClick={() => {
+                            if (isBooked) return;
+                            handleTimeSelect(time);
+                          }}
+                          className={`relative flex min-h-[58px] flex-col items-center justify-center overflow-hidden border px-3 py-2.5 text-sm transition ${
+                            isBooked
+                              ? "cursor-not-allowed border-[#b89272]/10 bg-[#241714]/50 text-[#8d7970] opacity-45"
+                              : isSelected
+                              ? "border-[#d2a47e] bg-[#d2a47e] font-semibold text-[#2f211d]"
+                              : "border-[#b89272]/30 bg-[#2f211d]/80 text-[#e6d7ce] hover:border-[#d2a47e] hover:bg-[#5a4036]"
+                          }`}
+                        >
+                          <span
+                            className={
+                              isBooked
+                                ? "line-through decoration-[#b89272]/60"
+                                : ""
+                            }
+                          >
+                            {time}
+                          </span>
+
+                          {isBooked && (
+                            <span className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.18em] text-[#a58e84]">
+                              Booked
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {!formData.time && submitError && (

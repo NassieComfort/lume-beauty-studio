@@ -1,4 +1,3 @@
-
 const API_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:5000"
@@ -14,29 +13,57 @@ const adminFetch = async (
 ) => {
   const token = getToken();
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {}),
-      ...(options.headers || {}),
-    },
-  });
+  const controller = new AbortController();
 
-  const data = await response.json();
+  const timeout = window.setTimeout(() => {
+    controller.abort();
+  }, 10000);
 
-  if (!response.ok) {
-    throw new Error(
-      data.message || "Something went wrong."
-    );
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+
+        ...(token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {}),
+
+        ...(options.headers || {}),
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Something went wrong."
+      );
+    }
+
+    return data;
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      error.name === "AbortError"
+    ) {
+      throw new Error(
+        "The server took too long to respond. Please try again."
+      );
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
   }
-
-  return data;
 };
+
+/* =========================
+   ADMIN LOGIN
+========================= */
 
 export const adminLogin = async (
   email: string,
@@ -104,23 +131,41 @@ export const getAdminUser = () => {
   }
 };
 
+/* =========================
+   ADMIN ACCOUNT
+========================= */
+
 export const updateAdminAccount = async (account: {
   currentPassword: string;
   email: string;
   newPassword?: string;
 }) => {
-  const response = await adminFetch("/auth/admin-account", {
-    method: "PATCH",
-    body: JSON.stringify(account),
-  });
+  const response = await adminFetch(
+    "/auth/admin-account",
+    {
+      method: "PATCH",
+      body: JSON.stringify(account),
+    }
+  );
 
   if (response.data?.token) {
-    localStorage.setItem("lume_admin_token", response.data.token);
-    localStorage.setItem("lume_admin_user", JSON.stringify(response.data.user));
+    localStorage.setItem(
+      "lume_admin_token",
+      response.data.token
+    );
+
+    localStorage.setItem(
+      "lume_admin_user",
+      JSON.stringify(response.data.user)
+    );
   }
 
   return response;
 };
+
+/* =========================
+   APPOINTMENTS
+========================= */
 
 export const getAdminAppointments = async () => {
   return adminFetch("/admin/appointments");
@@ -129,29 +174,39 @@ export const getAdminAppointments = async () => {
 export const getAdminAppointment = async (
   id: string
 ) => {
-  return adminFetch(`/admin/appointments/${id}`);
+  return adminFetch(
+    `/admin/appointments/${id}`
+  );
 };
 
 export const updateAppointmentStatus = async (
   id: string,
   status: string
 ) => {
-  return adminFetch(`/admin/appointments/${id}/status`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      status,
-    }),
-  });
+  return adminFetch(
+    `/admin/appointments/${id}/status`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        status,
+      }),
+    }
+  );
 };
 
 export const updateAppointmentPayment = async (
   id: string,
   paymentStatus: string
 ) => {
-  return adminFetch(`/admin/appointments/${id}/payment`, {
-    method: "PATCH",
-    body: JSON.stringify({ paymentStatus }),
-  });
+  return adminFetch(
+    `/admin/appointments/${id}/payment`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        paymentStatus,
+      }),
+    }
+  );
 };
 
 export const cancelAppointment = async (
@@ -164,6 +219,10 @@ export const cancelAppointment = async (
     }
   );
 };
+
+/* =========================
+   SERVICES
+========================= */
 
 export const getAdminServices = async () => {
   return adminFetch("/services");
@@ -201,40 +260,59 @@ export const updateAdminService = async (
   });
 };
 
+/* =========================
+   STUDIO SETTINGS
+========================= */
 
 export const getStudioSettings = async () => {
   return adminFetch("/admin/settings");
 };
 
-export const updateStudioSettings = async (settings: {
-  studioName?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  depositPercentage?: number;
-  latenessGracePeriod?: number;
-  cancellationNoticeHours?: number;
-}) => {
+export const updateStudioSettings = async (
+  settings: {
+    studioName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    depositPercentage?: number;
+    latenessGracePeriod?: number;
+    cancellationNoticeHours?: number;
+  }
+) => {
   return adminFetch("/admin/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
   });
 };
+
+/* =========================
+   AVAILABILITY
+========================= */
+
 export const getAdminAvailability = async () => {
-  return adminFetch("/availability");
+  return adminFetch("/admin/availability");
 };
 
-export const updateAdminAvailability = async (availability: {
-  dayOfWeek: number;
-  isOpen: boolean;
-  openingTime?: string;
-  closingTime?: string;
-}) => {
-  return adminFetch("/availability", {
-    method: "PUT",
-    body: JSON.stringify(availability),
-  });
+export const updateAdminAvailability = async (
+  availability: {
+    dayOfWeek: number;
+    isOpen: boolean;
+    openingTime?: string;
+    closingTime?: string;
+  }
+) => {
+  return adminFetch(
+    "/admin/availability",
+    {
+      method: "PUT",
+      body: JSON.stringify(availability),
+    }
+  );
 };
+
+/* =========================
+   BLOCKED SLOTS
+========================= */
 
 export const getAdminBlockedSlots = async () => {
   return adminFetch("/blocked-slots");

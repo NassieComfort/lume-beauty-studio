@@ -85,7 +85,6 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/appointments", appointmentRoutes);
-app.use("/api/availability", availabilityRoutes);
 app.use("/api/blocked-slots", blockedSlotRoutes);
 
 // Admin Restricted Area
