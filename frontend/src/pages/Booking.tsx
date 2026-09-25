@@ -160,7 +160,7 @@ export default function Booking() {
       ...previous,
       [name]: value,
       // Reset time if date changes to prevent conflicting selections
-      ...(name === "date" ? { time: "" } : {}),
+      ...(name === "date" || name === "serviceId" ? { time: "" } : {}),
     }));
 
     setSubmitError("");

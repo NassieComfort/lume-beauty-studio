@@ -146,35 +146,49 @@ export default function Services() {
 
         {!loading && !error && (
           <>
-            <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {currentServices.map((service) => (
-                <ServiceCard
-                  key={service._id}
-                  name={service.name}
-                  category={service.category}
-                  description={service.description}
-                  duration={
-                    service.duration >= 60
-                      ? `${Math.floor(
-                          service.duration / 60
-                        )} hr${
-                          service.duration >= 120
-                            ? "s"
-                            : ""
-                        }${
-                          service.duration % 60
-                            ? ` ${
-                                service.duration % 60
-                              } mins`
-                            : ""
-                        }`
-                      : `${service.duration} mins`
-                  }
-                  price={`₦${service.price.toLocaleString()}`}
-                  image={resolveServiceImage(service)}
-                />
-              ))}
-            </div>
+            <div className="mt-14">
+  {/* Mobile carousel */}
+  <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-5 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    {currentServices.map((service) => (
+      <div
+        key={service._id}
+        className="min-w-[84%] snap-start"
+      >
+        <ServiceCard
+          name={service.name}
+          category={service.category}
+          description={service.description}
+          duration={
+            service.duration
+              ? `${service.duration} mins`
+              : "Flexible"
+          }
+          price={`₦${service.price.toLocaleString()}`}
+          image={resolveServiceImage(service)}
+        />
+      </div>
+    ))}
+  </div>
+
+  {/* Tablet + desktop grid */}
+  <div className="hidden gap-5 md:grid md:grid-cols-2 lg:grid-cols-3">
+    {currentServices.map((service) => (
+      <ServiceCard
+        key={service._id}
+        name={service.name}
+        category={service.category}
+        description={service.description}
+        duration={
+          service.duration
+            ? `${service.duration} mins`
+            : "Flexible"
+        }
+        price={`₦${service.price.toLocaleString()}`}
+        image={resolveServiceImage(service)}
+      />
+    ))}
+  </div>
+</div>
 
             {totalPages > 1 && (
               <div className="mt-14 flex flex-col items-center gap-5">

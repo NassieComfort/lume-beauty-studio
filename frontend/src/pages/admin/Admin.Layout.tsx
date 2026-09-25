@@ -1,6 +1,23 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import lumeLogo from "../../assets/public/logo/lume logo.jpeg";
+import { useEffect, useState } from "react";
+import {
+  NavLink,
+  Outlet,
+  useNavigate,
+} from "react-router-dom";
 
+import {
+  Menu,
+  LayoutDashboard,
+  CalendarDays,
+  Sparkles,
+  Clock3,
+  Wallet,
+  Settings,
+  LogOut,
+  Search,
+} from "lucide-react";
+
+import lumeLogo from "../../assets/public/logo/lume logo.jpeg";
 
 type IconName =
   | "dashboard"
@@ -11,71 +28,18 @@ type IconName =
   | "settings";
 
 function Icon({ name }: { name: IconName }) {
-  const common = {
-    width: 18,
-    height: 18,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
+  const icons = {
+    dashboard: LayoutDashboard,
+    appointments: CalendarDays,
+    services: Sparkles,
+    availability: Clock3,
+    revenue: Wallet,
+    settings: Settings,
   };
 
-  if (name === "dashboard") {
-    return (
-      <svg {...common}>
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-      </svg>
-    );
-  }
+  const IconComponent = icons[name];
 
-  if (name === "appointments") {
-    return (
-      <svg {...common}>
-        <rect x="3" y="4" width="18" height="17" rx="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    );
-  }
-
-  if (name === "services") {
-    return (
-      <svg {...common}>
-        <path d="M12 3l2.7 5.5L21 9.4l-4.5 4.4 1.1 6.2L12 17.1 6.4 20l1.1-6.2L3 9.4l6.3-.9L12 3z" />
-      </svg>
-    );
-  }
-
-  if (name === "availability") {
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="12" r="9" />
-        <polyline points="12 7 12 12 15 14" />
-      </svg>
-    );
-  }
-
-  if (name === "revenue") {
-    return (
-      <svg {...common}>
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 000 7H14.5a3.5 3.5 0 010 7H7" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg {...common}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21h-2.6v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 008 15a1.7 1.7 0 00-1.5-1H6v-2.6h.5A1.7 1.7 0 008 10a1.7 1.7 0 00-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 001.9.3 1.7 1.7 0 001-1.5V5h2.6v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 00-.3 1.9 1.7 1.7 0 001.5 1h.1V14h-.1a1.7 1.7 0 00-1.5 1z" />
-    </svg>
-  );
+  return <IconComponent size={18} strokeWidth={1.8} />;
 }
 
 const navigation = [
@@ -114,7 +78,12 @@ const navigation = [
 export default function AdminLayout() {
   const navigate = useNavigate();
 
-  const storedUser = localStorage.getItem("lume_admin_user");
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
+
+  const storedUser = localStorage.getItem(
+    "lume_admin_user"
+  );
 
   let adminName = "Lume Admin";
   let adminEmail = "admin@lumebeautystudio.com";
@@ -136,15 +105,66 @@ export default function AdminLayout() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("lume_admin_token");
-    localStorage.removeItem("lume_admin_user");
+    localStorage.removeItem(
+      "lume_admin_token"
+    );
+
+    localStorage.removeItem(
+      "lume_admin_user"
+    );
+
+    setMobileMenuOpen(false);
 
     navigate("/admin/login");
   };
 
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+    };
+  }, []);
+
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={closeMobileMenu}
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+        />
+      )}
+
+      {/* =========================
+          SIDEBAR
+      ========================= */}
+
+      <aside
+        className={`admin-sidebar ${
+          mobileMenuOpen
+            ? "admin-sidebar-open"
+            : ""
+        }`}
+      >
         <div className="admin-brand">
           <img
             src={lumeLogo}
@@ -163,6 +183,7 @@ export default function AdminLayout() {
               key={item.path}
               to={item.path}
               end={item.path === "/admin"}
+              onClick={closeMobileMenu}
               className={({ isActive }) =>
                 `admin-nav-link ${
                   isActive ? "active" : ""
@@ -192,29 +213,53 @@ export default function AdminLayout() {
             className="admin-logout"
             onClick={handleLogout}
           >
-            Logout
+            <LogOut size={16} />
+            <span>Logout</span>
           </button>
         </div>
       </aside>
 
+      {/* =========================
+          MAIN
+      ========================= */}
+
       <main className="admin-main">
         <header className="admin-topbar">
-          <div className="admin-topbar-title">
-            Lume Beauty Studio
+          <div className="admin-topbar-left">
+            <button
+              type="button"
+              aria-label="Open navigation"
+              className="admin-mobile-menu-button"
+              onClick={() =>
+                setMobileMenuOpen(true)
+              }
+            >
+              <Menu size={22} />
+            </button>
+
+            <div className="admin-topbar-title">
+              Lume Beauty Studio
+            </div>
           </div>
 
           <div className="admin-topbar-right">
-            <input
-              type="search"
-              className="admin-search"
-              placeholder="Search..."
-              aria-label="Search"
-            />
+            <div className="admin-search-wrapper">
+              <Search size={15} />
+
+              <input
+                type="search"
+                className="admin-search"
+                placeholder="Search..."
+                aria-label="Search"
+              />
+            </div>
 
             <div className="admin-avatar">
               {adminName
                 .split(" ")
-                .map((word) => word.charAt(0))
+                .map((word) =>
+                  word.charAt(0)
+                )
                 .join("")
                 .slice(0, 2)
                 .toUpperCase()}

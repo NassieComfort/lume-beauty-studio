@@ -16,7 +16,7 @@ import adminRoutes from "./routes/admin.route";
 
 // Admin Feature Routes
 import adminServiceRoutes from "./routes/adminService.route";
-import adminAvailabilityRoutes from "./routes/availability.routes";
+import adminAvailabilityRoutes from "./routes/adminAvailability.route";
 
 import revenueRoutes from "./routes/revenue.route";
 import studioSettingsRoutes from "./routes/studioSettings.route";
@@ -85,6 +85,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/availability", availabilityRoutes);
 app.use("/api/blocked-slots", blockedSlotRoutes);
 
 // Admin Restricted Area
