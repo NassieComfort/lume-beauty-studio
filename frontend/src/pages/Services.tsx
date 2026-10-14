@@ -77,21 +77,50 @@ export default function Services() {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        const data = await getServices();
-        setServices(data);
-      } catch (err) {
-        console.error(err);
-        setError("Unable to load services.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [healthStatus, setHealthStatus] = useState<string | null>(null);
+  const [checkingHealth, setCheckingHealth] = useState(false);
 
-    loadServices();
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      setHealthStatus(null);
+
+      // timeout set to 10s to cover slower first-request times (Render cold start)
+      const data = await getServices(10000);
+      setServices(data);
+    } catch (err: any) {
+      console.error(err);
+      // Prefer to show the underlying message when available (e.g. timeout message)
+      setError(err?.message || "Unable to load services.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
   }, []);
+
+  const checkHealth = async () => {
+    try {
+      setCheckingHealth(true);
+      setHealthStatus(null);
+
+      const res = await fetch(`${API_URL}/api/health`, {
+        cache: "no-store",
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const json = await res.json();
+      setHealthStatus(json?.status ? `OK — ${json.status}` : "OK");
+    } catch (err: any) {
+      setHealthStatus(err?.message ? `Error: ${err.message}` : "Server unreachable");
+    } finally {
+      setCheckingHealth(false);
+    }
+  };
 
   const totalPages = Math.ceil(
     services.length / SERVICES_PER_PAGE
@@ -133,15 +162,47 @@ export default function Services() {
         </p>
 
         {loading && (
-          <p className="mt-14 text-sm text-lume-grey">
-            Loading services...
-          </p>
+          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: SERVICES_PER_PAGE }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded border border-lume-charcoal/10 bg-white p-6"
+              >
+                <div className="mb-5 h-40 w-full rounded bg-[#efe6dc]" />
+                <div className="h-5 w-3/4 rounded bg-[#efe6dc] mb-3" />
+                <div className="h-4 w-1/2 rounded bg-[#efe6dc] mb-4" />
+                <div className="h-14 w-full rounded bg-[#f7f2ee]" />
+              </div>
+            ))}
+          </div>
         )}
 
         {error && (
-          <p className="mt-14 text-sm text-red-500">
-            {error}
-          </p>
+          <div className="mt-14 space-y-4">
+            <p className="text-sm text-red-500">{error}</p>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={fetchServices}
+                className="rounded-full border border-lume-charcoal/20 bg-lume-charcoal/80 px-4 py-2 text-sm text-lume-cream hover:opacity-90"
+              >
+                Retry
+              </button>
+
+              <button
+                type="button"
+                onClick={checkHealth}
+                className="rounded-full border border-lume-charcoal/20 px-4 py-2 text-sm"
+              >
+                {checkingHealth ? "Checking…" : "Check server"}
+              </button>
+
+              {healthStatus && (
+                <span className="text-sm text-lume-grey">{healthStatus}</span>
+              )}
+            </div>
+          </div>
         )}
 
         {!loading && !error && (
