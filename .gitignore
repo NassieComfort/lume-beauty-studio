@@ -3,8 +3,16 @@ node_modules/
 
 # Env files
 .env
+.env.*
 .env.local
 .env.*.local
+!/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
 
 # Build output
 dist/

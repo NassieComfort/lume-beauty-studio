@@ -1,3 +1,6 @@
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+
 type ServiceCardProps = {
   name: string;
   category: string;
@@ -5,6 +8,7 @@ type ServiceCardProps = {
   duration: string;
   price: string;
   image?: string;
+  serviceId?: string;
 };
 
 export default function ServiceCard({
@@ -14,6 +18,7 @@ export default function ServiceCard({
   duration,
   price,
   image,
+  serviceId,
 }: ServiceCardProps) {
   return (
     <article className="group min-w-0 overflow-hidden border border-lume-charcoal/15 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -50,9 +55,19 @@ export default function ServiceCard({
           {price}
         </span>
 
-        <span className="text-xs uppercase tracking-wider text-lume-grey">
-          Available
-        </span>
+        {serviceId ? (
+          <Link
+            to={`/booking?service=${encodeURIComponent(serviceId)}`}
+            className="inline-flex min-h-10 items-center gap-2 text-xs font-medium uppercase tracking-wider text-lume-charcoal transition hover:text-[#8b5e45]"
+          >
+            Book this service
+            <ArrowRight size={15} aria-hidden="true" />
+          </Link>
+        ) : (
+          <span className="text-xs uppercase tracking-wider text-lume-grey">
+            Available
+          </span>
+        )}
       </div>
     </article>
   );

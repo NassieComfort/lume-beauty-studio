@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ServiceCard from "../components/ServiceCard";
 import {
-  getServices, type ServiceItem,
+  getApiBaseUrl, getServices, type ServiceItem,
 } from "../services/serviceApi";
 
 import acrylicNails from "../assets/public/Acrylic nails.jpeg";
@@ -38,32 +38,34 @@ const serviceImages: Record<string, string> = {
   "Full-Leg Wax": fullLeg,
 };
 
-const API_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:5000"
-).replace(/\/+$/, "");
+const API_URL = getApiBaseUrl();
 
 const resolveServiceImage = (
   service: ServiceItem
 ): string | undefined => {
-  // Use the local Vite image first.
-  // This ensures your existing service images work on Vercel.
   if (serviceImages[service.name]) {
     return serviceImages[service.name];
   }
 
-  // If the admin/API provides an absolute image URL,
-  // use it directly.
   if (
     service.image?.startsWith("http://") ||
-    service.image?.startsWith("https://")
+    service.image?.startsWith("https://") ||
+    service.image?.startsWith("data:") ||
+    service.image?.startsWith("/src/") ||
+    service.image?.startsWith("/@fs/") ||
+    service.image?.startsWith("/assets/")
   ) {
     return service.image;
   }
 
-  // If the API provides a relative Render image path.
   if (service.image) {
-    return `${API_URL}/${service.image.replace(/^\/+/, "")}`;
+    const cleaned = service.image.replace(/^\/+/, "");
+
+    if (!API_URL) {
+      return `/${cleaned}`;
+    }
+
+    return `${API_URL}/${cleaned}`;
   }
 
   return undefined;
@@ -77,22 +79,15 @@ export default function Services() {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [healthStatus, setHealthStatus] = useState<string | null>(null);
-  const [checkingHealth, setCheckingHealth] = useState(false);
-
   const fetchServices = async () => {
     try {
       setLoading(true);
       setError("");
-      setHealthStatus(null);
-
-      // timeout set to 10s to cover slower first-request times (Render cold start)
-      const data = await getServices(10000);
+      const data = await getServices();
       setServices(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      // Prefer to show the underlying message when available (e.g. timeout message)
-      setError(err?.message || "Unable to load services.");
+      setError("We're having trouble loading our services. Please try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -101,26 +96,6 @@ export default function Services() {
   useEffect(() => {
     fetchServices();
   }, []);
-
-  const checkHealth = async () => {
-    try {
-      setCheckingHealth(true);
-      setHealthStatus(null);
-
-      const res = await fetch(`${API_URL}/api/health`, {
-        cache: "no-store",
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const json = await res.json();
-      setHealthStatus(json?.status ? `OK — ${json.status}` : "OK");
-    } catch (err: any) {
-      setHealthStatus(err?.message ? `Error: ${err.message}` : "Server unreachable");
-    } finally {
-      setCheckingHealth(false);
-    }
-  };
 
   const totalPages = Math.ceil(
     services.length / SERVICES_PER_PAGE
@@ -162,46 +137,33 @@ export default function Services() {
         </p>
 
         {loading && (
-          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3" aria-label="Loading services" aria-busy="true">
             {Array.from({ length: SERVICES_PER_PAGE }).map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse rounded border border-lume-charcoal/10 bg-white p-6"
+                className="animate-pulse border border-lume-charcoal/10 bg-white p-6"
               >
-                <div className="mb-5 h-40 w-full rounded bg-[#efe6dc]" />
-                <div className="h-5 w-3/4 rounded bg-[#efe6dc] mb-3" />
-                <div className="h-4 w-1/2 rounded bg-[#efe6dc] mb-4" />
-                <div className="h-14 w-full rounded bg-[#f7f2ee]" />
+                <div className="mb-6 aspect-[5/3] w-full bg-[#efe6dc]" />
+                <div className="mb-3 h-3 w-1/4 bg-[#efe6dc]" />
+                <div className="mb-3 h-6 w-3/4 bg-[#efe6dc]" />
+                <div className="mb-6 h-4 w-1/2 bg-[#efe6dc]" />
+                <div className="mb-8 h-14 w-full bg-[#f7f2ee]" />
+                <div className="h-8 border-t border-lume-charcoal/10 pt-4" />
               </div>
             ))}
           </div>
         )}
 
         {error && (
-          <div className="mt-14 space-y-4">
-            <p className="text-sm text-red-500">{error}</p>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={fetchServices}
-                className="rounded-full border border-lume-charcoal/20 bg-lume-charcoal/80 px-4 py-2 text-sm text-lume-cream hover:opacity-90"
-              >
-                Retry
-              </button>
-
-              <button
-                type="button"
-                onClick={checkHealth}
-                className="rounded-full border border-lume-charcoal/20 px-4 py-2 text-sm"
-              >
-                {checkingHealth ? "Checking…" : "Check server"}
-              </button>
-
-              {healthStatus && (
-                <span className="text-sm text-lume-grey">{healthStatus}</span>
-              )}
-            </div>
+          <div className="mt-14 border border-lume-charcoal/15 bg-white p-8" role="alert">
+            <p className="max-w-xl text-sm leading-6 text-lume-grey">{error}</p>
+            <button
+              type="button"
+              onClick={fetchServices}
+              className="mt-5 border border-lume-charcoal bg-lume-charcoal px-5 py-3 text-xs font-medium uppercase tracking-wider text-lume-cream transition hover:bg-[#4a3028]"
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -226,6 +188,7 @@ export default function Services() {
           }
           price={`₦${service.price.toLocaleString()}`}
           image={resolveServiceImage(service)}
+          serviceId={service._id}
         />
       </div>
     ))}
@@ -246,6 +209,7 @@ export default function Services() {
         }
         price={`₦${service.price.toLocaleString()}`}
         image={resolveServiceImage(service)}
+        serviceId={service._id}
       />
     ))}
   </div>

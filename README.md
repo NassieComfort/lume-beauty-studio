@@ -38,10 +38,17 @@ npm run dev
 ```
 Visit `http://localhost:5000/api/health` — you should see `{ "status": "ok" }`.
 
+Set your real environment variables in Render (or your local `.env`) only. Do not commit real secrets to Git. Example files are safe to version.
+
 ### 3. Frontend
 ```bash
 cd frontend
 npm install
+cp .env.example .env   # optional for local development
 npm run dev
+```
+Set `VITE_API_BASE_URL` in Vercel or your local `.env` to your Render backend URL, for example:
+```bash
+VITE_API_BASE_URL=https://your-render-backend.onrender.com
 ```
 Visit `http://localhost:5173`.

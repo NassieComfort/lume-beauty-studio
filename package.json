@@ -1,11 +1,10 @@
 {
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "lucide-react": "^1.41.0",
-    "react-router-dom": "^7.18.2",
-    "recharts": "^3.10.1"
-  },
-  "devDependencies": {
-    "@types/bcrypt": "^6.0.0"
+  "name": "lume-beauty-studio",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev -- --host 0.0.0.0",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build"
   }
 }

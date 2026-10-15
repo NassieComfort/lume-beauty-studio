@@ -1,22 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { getServices, type ServiceItem } from "../services/serviceApi";
+import { Link, useSearchParams } from "react-router-dom";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/style.css";
+import { getApiBaseUrl, getServices, type ServiceItem } from "../services/serviceApi";
 
-const timeSlots = [
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-];
+const API_URL = getApiBaseUrl();
 
 const DEPOSIT_PERCENTAGE = 30;
 
 export default function Booking() {
+  const [searchParams] = useSearchParams();
+  const requestedServiceId = searchParams.get("service");
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [serviceError, setServiceError] = useState("");
@@ -27,7 +21,9 @@ export default function Booking() {
 
   // Booked slots tracking
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
 
   const [formData, setFormData] = useState({
     serviceId: "",
@@ -40,9 +36,11 @@ export default function Booking() {
 
   const today = new Date();
 
-  const todayString = `${today.getFullYear()}-${String(
-    today.getMonth() + 1
-  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  today.setHours(0, 0, 0, 0);
+
+  const selectedDate = formData.date
+    ? new Date(`${formData.date}T00:00:00`)
+    : undefined;
 
   // =========================
   // LOAD SERVICES
@@ -59,7 +57,7 @@ export default function Booking() {
         setServices(data);
       } catch (error) {
         console.error("Failed to load services:", error);
-        setServiceError("Unable to load services.");
+        setServiceError("We're having trouble loading services. Please try again shortly.");
       } finally {
         setLoadingServices(false);
       }
@@ -68,6 +66,17 @@ export default function Booking() {
     loadServices();
   }, []);
 
+  useEffect(() => {
+    if (!requestedServiceId || loadingServices) return;
+
+    if (services.some((service) => service._id === requestedServiceId)) {
+      setFormData((previous) => ({
+        ...previous,
+        serviceId: requestedServiceId,
+      }));
+    }
+  }, [loadingServices, requestedServiceId, services]);
+
   // =========================
   // LOAD BOOKED SLOTS FOR DATE
   // =========================
@@ -75,18 +84,24 @@ export default function Booking() {
   useEffect(() => {
     if (!formData.date || !formData.serviceId) {
       setBookedSlots([]);
+      setAvailableSlots([]);
+      setAvailabilityError("");
+      setLoadingBookings(false);
       return;
     }
+
+    const controller = new AbortController();
 
     const fetchAvailability = async () => {
       try {
         setLoadingBookings(true);
         setBookedSlots([]);
+        setAvailableSlots([]);
+        setAvailabilityError("");
 
-        const API_URL = (
-          import.meta.env.VITE_API_BASE_URL ||
-          "http://localhost:5000"
-        ).replace(/\/+$/, "");
+        if (!API_URL) {
+          throw new Error("The booking API is not configured.");
+        }
 
         const params = new URLSearchParams({
           date: formData.date,
@@ -94,7 +109,8 @@ export default function Booking() {
         });
 
         const response = await fetch(
-          `${API_URL}/api/availability/slots?${params.toString()}`
+          `${API_URL}/api/availability/slots?${params.toString()}`,
+          { signal: controller.signal }
         );
 
         const data = await response.json();
@@ -105,22 +121,24 @@ export default function Booking() {
           );
         }
 
-        setBookedSlots(
-          data.data?.bookedSlots || []
-        );
+        setBookedSlots(data.data?.bookedSlots || []);
+        setAvailableSlots(data.data?.availableSlots || []);
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error(
           "Failed to fetch booking availability:",
           error
         );
 
-        setBookedSlots([]);
+        setAvailabilityError("We couldn't check availability. Please try selecting the date again.");
       } finally {
-        setLoadingBookings(false);
+        if (!controller.signal.aborted) setLoadingBookings(false);
       }
     };
 
     fetchAvailability();
+
+    return () => controller.abort();
   }, [formData.date, formData.serviceId]);
 
   // =========================
@@ -163,6 +181,15 @@ export default function Booking() {
       ...(name === "date" || name === "serviceId" ? { time: "" } : {}),
     }));
 
+    setSubmitError("");
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    const value = date
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+      : "";
+
+    setFormData((previous) => ({ ...previous, date: value, time: "" }));
     setSubmitError("");
   };
 
@@ -259,7 +286,10 @@ export default function Booking() {
     setSubmitError("");
 
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+      if (!API_URL) {
+        throw new Error("Booking is temporarily unavailable. Please contact the studio directly.");
+      }
+
       const response = await fetch(
         `${API_URL}/api/appointments`,
         {
@@ -367,12 +397,12 @@ export default function Booking() {
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="mt-14 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]"
+            className="mt-14 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]"
           >
 
             {/* LEFT */}
 
-            <div className="border border-[#b89272]/25 bg-[#3b2119]/95 p-6 shadow-[0_24px_80px_rgba(12,7,6,0.3)] md:p-10">
+            <div className="min-w-0 border border-[#b89272]/25 bg-[#3b2119]/95 p-6 shadow-[0_24px_80px_rgba(12,7,6,0.3)] md:p-10">
               <div className="space-y-7">
 
                 {/* SERVICE */}
@@ -420,24 +450,32 @@ export default function Booking() {
 
                 {/* DATE */}
 
-                <div>
-                  <label
-                    htmlFor="date"
+                <div role="group" aria-labelledby="date-label">
+                  <p
+                    id="date-label"
                     className="mb-2 block text-xs uppercase tracking-wider text-lume-grey"
                   >
                     Preferred date
-                  </label>
-
-                  <input
-                    id="date"
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleChange}
-                    min={todayString}
-                    required
-                    className="w-full border border-[#b89272]/30 bg-[#2f211d]/80 px-4 py-3.5 text-sm text-[#f7f0e9] outline-none transition focus:border-[#d2a47e]"
-                  />
+                  </p>
+                  <div className="w-full border border-[#b89272]/30 bg-[#2f211d]/80 p-3 sm:p-5">
+                    <DayPicker
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      disabled={{ before: today }}
+                      aria-label="Choose an appointment date"
+                    />
+                  </div>
+                  {selectedDate && (
+                    <p className="mt-3 text-xs text-[#d4c2b8]" aria-live="polite">
+                      Selected: {selectedDate.toLocaleDateString(undefined, {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
                 </div>
 
                 {/* TIME */}
@@ -455,8 +493,27 @@ export default function Booking() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    {timeSlots.map((time) => {
+                  {availabilityError && (
+                    <p className="mb-3 text-xs text-red-300" role="alert">
+                      {availabilityError}
+                    </p>
+                  )}
+
+                  {!formData.date || !formData.serviceId ? (
+                    <p className="border border-[#b89272]/15 px-4 py-5 text-sm text-[#a58e84]">
+                      Choose a service and date to see available times.
+                    </p>
+                  ) : loadingBookings ? (
+                    <p className="animate-pulse border border-[#b89272]/15 px-4 py-5 text-sm text-[#d4c2b8]" aria-live="polite">
+                      Checking available times...
+                    </p>
+                  ) : availabilityError ? null : availableSlots.length === 0 && bookedSlots.length === 0 ? (
+                    <p className="border border-[#b89272]/15 px-4 py-5 text-sm text-[#a58e84]">
+                      No appointments are available on this date. Choose another date.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                    {[...availableSlots, ...bookedSlots].sort().map((time) => {
                       const isBooked = bookedSlots.includes(time);
                       const isSelected = formData.time === time;
 
@@ -495,7 +552,8 @@ export default function Booking() {
                         </button>
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
 
                   {!formData.time && submitError && (
                     <p className="mt-2 text-xs text-red-400">
@@ -607,7 +665,7 @@ export default function Booking() {
 
             {/* SUMMARY */}
 
-            <aside className="h-fit border border-[#b89272]/25 bg-[#3b2119]/90 p-7 text-[#f7f0e9] shadow-[0_24px_80px_rgba(12,7,6,0.26)] lg:sticky lg:top-32">
+            <aside className="h-fit min-w-0 border border-[#b89272]/25 bg-[#3b2119]/90 p-7 text-[#f7f0e9] shadow-[0_24px_80px_rgba(12,7,6,0.26)] lg:sticky lg:top-32">
               <p className="text-xs uppercase tracking-[0.25em] text-lume-grey">
                 Booking summary
               </p>

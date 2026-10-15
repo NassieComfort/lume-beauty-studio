@@ -1,6 +1,14 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/appointments";
+const getApiBaseUrl = () =>
+  (
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.DEV ? "http://localhost:5000" : "")
+  ).replace(/\/+$/, "");
+
+const API_URL = getApiBaseUrl()
+  ? `${getApiBaseUrl()}/api/appointments`
+  : "";
 
 // =========================
 // TYPES

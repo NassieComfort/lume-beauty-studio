@@ -47,3 +47,38 @@ a {
   background: #F7F3ED;
   color: #171514;
 }
+
+.rdp-root {
+  --rdp-accent-color: #d2a47e;
+  --rdp-accent-background-color: #4a3028;
+  --rdp-day_button-border-radius: 0;
+  --rdp-day_button-height: 2.5rem;
+  --rdp-day_button-width: 2.5rem;
+  --rdp-selected-border: 1px solid #d2a47e;
+  --rdp-today-color: #d2a47e;
+  --rdp-disabled-opacity: 0.3;
+  width: 100%;
+  color: #f7f0e9;
+}
+
+.rdp-months,
+.rdp-month,
+.rdp-month_grid {
+  width: 100%;
+}
+
+.rdp-months {
+  justify-content: center;
+}
+
+.rdp-day_button {
+  color: inherit;
+}
+
+.rdp-day_button:hover:not([disabled]) {
+  background-color: #5a4036;
+}
+
+.rdp-chevron {
+  fill: #d2a47e;
+}

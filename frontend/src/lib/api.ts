@@ -1,9 +1,19 @@
-const API_URL = "http://localhost:5000/api";
+const getApiBaseUrl = () =>
+  (
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.DEV ? "http://localhost:5000" : "")
+  ).replace(/\/+$/, "");
+
+const API_URL = getApiBaseUrl() ? `${getApiBaseUrl()}/api` : "";
 
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  if (!API_URL) {
+    throw new Error("The API is not configured.");
+  }
+
   const token = localStorage.getItem("token");
 
   const response = await fetch(`${API_URL}${endpoint}`, {

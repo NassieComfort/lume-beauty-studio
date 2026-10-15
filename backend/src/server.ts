@@ -40,9 +40,17 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://localhost:5175",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
+  "http://127.0.0.1:5175",
 ].filter(Boolean) as string[];
+
+const matchesAllowedOrigin = (origin: string) => {
+  if (allowedOrigins.includes(origin)) return true;
+
+  return /^http:\/\/(localhost|127\.0\.0\.1):(5173|5174|5175|4173|3000)$/.test(origin);
+};
 
 app.use(
   cors({
@@ -54,7 +62,7 @@ app.use(
         return;
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (matchesAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
